@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,14 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery()) // panic 발생시 500
+
+	// CORS 설정
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3001"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		AllowCredentials: true,
+	}))
 
 	store := memstore.NewStore([]byte(setting.SecretSetting.SessionKey)) // authentication key for session
 	r.Use(sessions.Sessions("course_reg_session", store))
