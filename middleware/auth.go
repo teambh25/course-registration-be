@@ -1,4 +1,4 @@
-package authmiddleware
+package middleware
 
 import (
 	"course-reg/pkg/constant"

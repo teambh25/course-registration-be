@@ -1,13 +1,12 @@
 package routers
 
 import (
-	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
 
 	"course-reg/handler"
-	authmiddleware "course-reg/middleware"
+	"course-reg/middleware"
 	"course-reg/pkg/setting"
 )
 
@@ -18,12 +17,7 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 	r.Use(gin.Recovery()) // panic 발생시 500
 
 	// CORS 설정
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3001"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
-		AllowCredentials: true,
-	}))
+	r.Use(middleware.CORS())
 
 	store := memstore.NewStore([]byte(setting.SecretSetting.SessionKey)) // authentication key for session
 	r.Use(sessions.Sessions("course_reg_session", store))
@@ -39,11 +33,12 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 		}
 
 		admin := v1.Group("/admin")
-		admin.Use(authmiddleware.AuthAdmin())
+		admin.Use(middleware.AuthAdmin())
 		{
 
 			admin.POST("students/register", adminHandler.RegisterStudents)
 			admin.POST("/courses", adminHandler.CreateCourse)
+
 			// admin.DELETE("/courses", admin.Handlers.DeleteCourse)
 
 			// admin.GET("/courses/:course_id/students", admin.Handlers.GetEnrolledStudentsByCourse)
@@ -53,7 +48,7 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 		}
 
 		student := v1.Group("/courses")
-		student.Use(authmiddleware.AuthStudent()) // amdin도 쓸 수 있어야되나..?
+		student.Use(middleware.AuthStudent()) // amdin도 쓸 수 있어야되나..?
 		{
 
 		}

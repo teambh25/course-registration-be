@@ -6,6 +6,6 @@ type EnrollmentRepository struct {
 	db *gorm.DB
 }
 
-func NewEnrollmentRepositoryRepository(db *gorm.DB) *EnrollmentRepository {
+func NewEnrollmentRepository(db *gorm.DB) *EnrollmentRepository {
 	return &EnrollmentRepository{db: db}
 }

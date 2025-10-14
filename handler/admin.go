@@ -24,7 +24,10 @@ func (h *AdminHandler) RegisterStudents(c *gin.Context) {
 		return
 	}
 
-	h.adminService.RegisterStudents(students)
+	if err := h.adminService.RegisterStudents(students); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "학생 등록 성공", "count": len(students)})
 }

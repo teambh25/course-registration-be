@@ -4,7 +4,6 @@ import (
 	"course-reg/pkg/constant"
 	"course-reg/pkg/setting"
 	"course-reg/repository"
-	"fmt"
 )
 
 const (
@@ -30,8 +29,5 @@ func (a *AuthService) Check(username string, password string) (constant.UserRole
 	} else if pw, err = a.studentRepo.GetPassword(username); err == nil && pw == password {
 		role = constant.RoleStudent
 	}
-
-	fmt.Println("[check]", username, password, pw)
-	fmt.Println("[check]", role, err)
 	return role, err
 }

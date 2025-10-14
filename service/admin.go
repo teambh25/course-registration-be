@@ -24,7 +24,7 @@ func NewAdminService(
 }
 
 func (s *AdminService) RegisterStudents(students []models.Student) error {
-	err := s.studentRepo.InsertStudens(students)
+	err := s.studentRepo.InsertStudents(students)
 	return err
 }
 

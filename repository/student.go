@@ -14,7 +14,7 @@ func NewStudentRepository(db *gorm.DB) *StudentRepository {
 	return &StudentRepository{db: db}
 }
 
-func (r *StudentRepository) InsertStudens(students []models.Student) error {
+func (r *StudentRepository) InsertStudents(students []models.Student) error {
 	tx := r.db.Begin()
 	if err := tx.CreateInBatches(students, 100).Error; err != nil {
 		tx.Rollback()

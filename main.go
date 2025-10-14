@@ -27,7 +27,7 @@ func main() {
 	db := models.Setup()
 	studentRepo := repository.NewStudentRepository(db)
 	courseRepo := repository.NewCourseRepository(db)
-	enrollRepo := repository.NewEnrollmentRepositoryRepository(db)
+	enrollRepo := repository.NewEnrollmentRepository(db)
 
 	adminService := service.NewAdminService(studentRepo, courseRepo, enrollRepo)
 	adminHandler := handler.NewAdminHandler(adminService)
