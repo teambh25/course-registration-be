@@ -43,7 +43,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"message": "Log in!"})
+		c.JSON(http.StatusOK, gin.H{"role": role.String()})
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Incorrect password"})
 	}
