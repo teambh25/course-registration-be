@@ -1,0 +1,32 @@
+package authmiddleware
+
+import (
+	"course-reg/pkg/constant"
+	"net/http"
+
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
+)
+
+func AuthAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session := sessions.Default(c)
+		role := session.Get("role")
+
+		if x, ok := role.(int); !ok || constant.UserRole(x) != constant.RoleAdmin {
+			c.AbortWithStatus(http.StatusUnauthorized)
+		}
+		c.Next() // Request 이전
+	}
+}
+
+func AuthStudent() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session := sessions.Default(c)
+		role := session.Get("role")
+		if role == nil { // || role != constant.RoleStudent
+			c.AbortWithStatus(http.StatusUnauthorized)
+		}
+		c.Next() // Request 이전
+	}
+}

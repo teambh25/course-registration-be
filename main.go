@@ -1,17 +1,57 @@
 package main
 
 import (
- "github.com/gin-gonic/gin"
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+
+	"course-reg/handler"
+	"course-reg/models"
+	"course-reg/pkg/logging"
+	"course-reg/pkg/setting"
+	"course-reg/pkg/util"
+	"course-reg/repository"
+	"course-reg/routers"
+	"course-reg/service"
 )
 
-func main() {
-	r := gin.Default()
-	
-	r.GET("/", func(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "Hello, Go Docker World!",
-	})
-	})
+func init() {
+	setting.Setup()
+	logging.Setup()
+	util.Setup()
+}
 
-	r.Run(":80")
+func main() {
+	db := models.Setup()
+	studentRepo := repository.NewStudentRepository(db)
+	courseRepo := repository.NewCourseRepository(db)
+	enrollRepo := repository.NewEnrollmentRepositoryRepository(db)
+
+	adminService := service.NewAdminService(studentRepo, courseRepo, enrollRepo)
+	adminHandler := handler.NewAdminHandler(adminService)
+
+	authService := service.NewAuthService(studentRepo)
+	authHandler := handler.NewAuthHandler(authService)
+
+	gin.SetMode(setting.ServerSetting.RunMode)
+	routersInit := routers.InitRouter(adminHandler, authHandler)
+
+	readTimeout := setting.ServerSetting.ReadTimeout
+	writeTimeout := setting.ServerSetting.WriteTimeout
+	endPoint := fmt.Sprintf(":%d", setting.ServerSetting.HttpPort)
+	maxHeaderBytes := 1 << 20
+
+	server := &http.Server{
+		Addr:           endPoint,
+		Handler:        routersInit,
+		ReadTimeout:    readTimeout,
+		WriteTimeout:   writeTimeout,
+		MaxHeaderBytes: maxHeaderBytes,
+	}
+
+	log.Printf("[info] start http server listening %s", endPoint)
+
+	server.ListenAndServe()
 }
