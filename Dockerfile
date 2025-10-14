@@ -20,4 +20,5 @@ RUN cp /build/main .
 
 FROM scratch
 COPY --from=builder /app/main .
+COPY --from=builder /build/conf/app.ini ./conf/app.ini
 ENTRYPOINT ["/main"]
