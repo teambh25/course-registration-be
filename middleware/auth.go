@@ -14,7 +14,7 @@ func AuthAdmin() gin.HandlerFunc {
 		role := session.Get("role")
 
 		if x, ok := role.(int); !ok || constant.UserRole(x) != constant.RoleAdmin {
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		}
 		c.Next() // Request 이전
 	}
@@ -25,7 +25,7 @@ func AuthStudent() gin.HandlerFunc {
 		session := sessions.Default(c)
 		role := session.Get("role")
 		if role == nil { // || role != constant.RoleStudent
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		}
 		c.Next() // Request 이전
 	}

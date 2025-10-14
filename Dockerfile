@@ -16,9 +16,9 @@ RUN go build -o main .
 # RUN go build -o main .
 
 WORKDIR /app
-RUN cp /build/main .
+# RUN cp 
 
 FROM scratch
-COPY --from=builder /app/main .
+COPY --from=builder /build/main .
 COPY --from=builder /build/conf/app.ini ./conf/app.ini
 ENTRYPOINT ["/main"]
