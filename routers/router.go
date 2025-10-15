@@ -38,14 +38,13 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 		{
 
 			admin.POST("students/register", adminHandler.RegisterStudents)
+			admin.DELETE("students/reset", adminHandler.ResetStudents)
+
 			admin.POST("/courses", adminHandler.CreateCourse)
+			admin.DELETE("/courses", adminHandler.DeleteCourse)
 
-			// admin.DELETE("/courses", admin.Handlers.DeleteCourse)
-
-			// admin.GET("/courses/:course_id/students", admin.Handlers.GetEnrolledStudentsByCourse)
-			// admin.POST("/enrollments/force", admin.Handlers.ForceEnrollStudent)
-			// admin.POST("/enrollments/cancel", admin.Handlers.CancelEnrollment)
-			// admin.GET("/students/:student_id/courses", admin.Handlers.GetCoursesByStudent)
+			// admin.POST("/enrollments", adminHandler.AddEnrollment)
+			// admin.DELETE("/enrollments", adminHandler.CancelEnrollment)
 		}
 
 		student := v1.Group("/courses")

@@ -1,23 +1,22 @@
 package models
 
-// var db *gorm.DB
-
 import (
 	"log"
 	"time"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func Setup() *gorm.DB {
-	db, err := gorm.Open(sqlite.Open("course_reg.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("db/course_reg.db"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		log.Fatal("failed to connect database:", err)
 		panic(err)
 	}
 
-	if err := db.AutoMigrate(&Student{}); err != nil {
+	if err := db.AutoMigrate(&Student{}, &Course{}); err != nil {
 		log.Fatal("failed to migrate database:", err)
 		panic(err)
 	}

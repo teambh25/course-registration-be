@@ -3,6 +3,7 @@ package service
 import (
 	"course-reg/models"
 	"course-reg/repository"
+	"log"
 )
 
 type AdminService struct {
@@ -25,15 +26,35 @@ func NewAdminService(
 
 func (s *AdminService) RegisterStudents(students []models.Student) error {
 	err := s.studentRepo.InsertStudents(students)
+	if err != nil {
+		log.Println("register students failed:", err.Error())
+	}
 	return err
 }
 
-func (s *AdminService) CreateCourse() {
-
+func (s *AdminService) ResetStudents() error {
+	err := s.studentRepo.DeleteAllStudents()
+	if err != nil {
+		log.Println("reset students failed:", err.Error())
+	}
+	return err
 }
 
-func (s *AdminService) DeleteCourse() {
+func (s *AdminService) CreateCourse(course *models.Course) (uint, error) {
+	err := s.courseRepo.CreateCourse(course)
+	if err != nil {
+		log.Println("create course failed:", err.Error())
+		return 0, err
+	}
+	return course.ID, nil
+}
 
+func (s *AdminService) DeleteCourse(courseID uint) error {
+	err := s.courseRepo.DeleteCourse(courseID)
+	if err != nil {
+		log.Println("delete course failed:", err.Error())
+	}
+	return err
 }
 
 // func (s *AdminService) GetEnrolledStudentsByCourse(courseID uint) ([]Student, error)
