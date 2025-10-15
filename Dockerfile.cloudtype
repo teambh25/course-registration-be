@@ -8,20 +8,10 @@ ENV GO111MODULE=on \
 # COPY go.mod go.sum ./
 COPY . ./
 RUN go mod download
-
-
 RUN go build -o main .
 
-# COPY main.go ./
-# RUN go build -o main .
-RUN chmod -R 777 /db /logs
-
 WORKDIR /app
-# RUN cp 
-
 FROM scratch
 COPY --from=builder /build/main .
 COPY --from=builder /build/conf/app.ini ./conf/app.ini
-COPY --from=builder /build/db /db
-COPY --from=builder /build/logs /logs
 ENTRYPOINT ["/main"]
