@@ -16,9 +16,10 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery()) // panic 발생시 500
 
-	// CORS 설정
+	// CORS
 	r.Use(middleware.CORS())
 
+	// session
 	store := memstore.NewStore([]byte(setting.SecretSetting.SessionKey)) // authentication key for session
 	r.Use(sessions.Sessions("course_reg_session", store))
 

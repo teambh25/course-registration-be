@@ -12,7 +12,6 @@ func AuthAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
 		role := session.Get("role")
-
 		if x, ok := role.(int); !ok || constant.UserRole(x) != constant.RoleAdmin {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		}
