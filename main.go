@@ -29,13 +29,15 @@ func main() {
 	enrollRepo := repository.NewEnrollmentRepository(db)
 
 	authService := service.NewAuthService(studentRepo)
-	authHandler := handler.NewAuthHandler(authService)
-
 	adminService := service.NewAdminService(studentRepo, courseRepo, enrollRepo)
+	studentService := service.NewStudentService(enrollRepo)
+
+	authHandler := handler.NewAuthHandler(authService)
 	adminHandler := handler.NewAdminHandler(adminService)
+	studentHandler := handler.NewStudentHandelr(studentService)
 
 	gin.SetMode(setting.ServerSetting.RunMode)
-	routersInit := routers.InitRouter(adminHandler, authHandler)
+	routersInit := routers.InitRouter(adminHandler, authHandler, studentHandler)
 
 	readTimeout := setting.ServerSetting.ReadTimeout
 	writeTimeout := setting.ServerSetting.WriteTimeout

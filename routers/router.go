@@ -11,7 +11,7 @@ import (
 )
 
 // InitRouter initialize routing information
-func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHandler) *gin.Engine {
+func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHandler, studentHandler *handler.StudentHandler) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery()) // panic 발생시 500
