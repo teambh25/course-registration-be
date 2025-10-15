@@ -9,7 +9,6 @@ import (
 
 	"course-reg/handler"
 	"course-reg/models"
-	"course-reg/pkg/logging"
 	"course-reg/pkg/setting"
 	"course-reg/pkg/util"
 	"course-reg/repository"
@@ -19,7 +18,7 @@ import (
 
 func init() {
 	setting.Setup()
-	logging.Setup()
+	// logging.Setup()
 	util.Setup()
 }
 
