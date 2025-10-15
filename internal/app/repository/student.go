@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"course-reg/models"
+	"course-reg/internal/app/models"
 	"fmt"
 
 	"gorm.io/gorm"

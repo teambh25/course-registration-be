@@ -5,9 +5,9 @@ import (
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
 
-	"course-reg/handler"
-	"course-reg/middleware"
-	"course-reg/pkg/setting"
+	"course-reg/internal/app/handler"
+	"course-reg/internal/app/middleware"
+	"course-reg/internal/pkg/setting"
 )
 
 // InitRouter initialize routing information

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"course-reg/repository"
+	"course-reg/internal/app/repository"
 )
 
 type StudentService struct {

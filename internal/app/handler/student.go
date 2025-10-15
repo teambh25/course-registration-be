@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"course-reg/service"
+	"course-reg/internal/app/service"
 )
 
 type StudentHandler struct {

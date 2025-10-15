@@ -1,9 +1,9 @@
 package service
 
 import (
-	"course-reg/pkg/constant"
-	"course-reg/pkg/setting"
-	"course-reg/repository"
+	"course-reg/internal/app/repository"
+	"course-reg/internal/pkg/constant"
+	"course-reg/internal/pkg/setting"
 )
 
 const (

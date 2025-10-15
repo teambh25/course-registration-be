@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"course-reg/pkg/setting"
+	"course-reg/internal/pkg/setting"
 )
 
 // getLogFilePath get the log file save path

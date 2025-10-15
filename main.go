@@ -7,13 +7,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"course-reg/handler"
-	"course-reg/models"
-	"course-reg/pkg/setting"
-	"course-reg/pkg/util"
-	"course-reg/repository"
-	"course-reg/routers"
-	"course-reg/service"
+	"course-reg/internal/app/handler"
+	"course-reg/internal/app/models"
+	"course-reg/internal/app/repository"
+	"course-reg/internal/app/routers"
+	"course-reg/internal/app/service"
+	"course-reg/internal/pkg/setting"
+	"course-reg/internal/pkg/util"
 )
 
 func init() {

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"course-reg/pkg/constant"
+	"course-reg/internal/pkg/constant"
 	"net/http"
 
 	"github.com/gin-contrib/sessions"

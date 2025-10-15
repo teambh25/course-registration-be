@@ -1,7 +1,7 @@
 package logging
 
 import (
-	"course-reg/pkg/file"
+	"course-reg/internal/pkg/file"
 	"fmt"
 	"log"
 	"os"

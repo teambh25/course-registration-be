@@ -1,8 +1,8 @@
 package service
 
 import (
-	"course-reg/models"
-	"course-reg/repository"
+	"course-reg/internal/app/models"
+	"course-reg/internal/app/repository"
 	"log"
 )
 
