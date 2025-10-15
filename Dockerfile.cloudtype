@@ -1,17 +1,19 @@
-FROM golang:1.25-alpine AS builder
-WORKDIR /build
-ENV GO111MODULE=on \
-    CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64
+### 수정 필요 ###
 
-# COPY go.mod go.sum ./
-COPY . ./
-RUN go mod download
-RUN go build -o main .
+# FROM golang:1.25-alpine AS builder
+# WORKDIR /build
+# ENV GO111MODULE=on \
+#     CGO_ENABLED=0 \
+#     GOOS=linux \
+#     GOARCH=amd64
 
-WORKDIR /app
-FROM scratch
-COPY --from=builder /build/main .
-COPY --from=builder /build/conf/app.ini ./conf/app.ini
-ENTRYPOINT ["/main"]
+# # COPY go.mod go.sum ./
+# COPY . ./
+# RUN go mod download
+# RUN go build -o main .
+
+# WORKDIR /app
+# FROM scratch
+# COPY --from=builder /build/main .
+# COPY --from=builder /build/conf/app.ini ./conf/app.ini
+# ENTRYPOINT ["/main"]

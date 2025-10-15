@@ -18,7 +18,7 @@ import (
 
 func init() {
 	setting.Setup()
-	// logging.Setup()
+	// logging.Setup() // logging 할 수 있는 환경일 떄 다시 사용
 	util.Setup()
 }
 
@@ -28,11 +28,11 @@ func main() {
 	courseRepo := repository.NewCourseRepository(db)
 	enrollRepo := repository.NewEnrollmentRepository(db)
 
-	adminService := service.NewAdminService(studentRepo, courseRepo, enrollRepo)
-	adminHandler := handler.NewAdminHandler(adminService)
-
 	authService := service.NewAuthService(studentRepo)
 	authHandler := handler.NewAuthHandler(authService)
+
+	adminService := service.NewAdminService(studentRepo, courseRepo, enrollRepo)
+	adminHandler := handler.NewAdminHandler(adminService)
 
 	gin.SetMode(setting.ServerSetting.RunMode)
 	routersInit := routers.InitRouter(adminHandler, authHandler)
