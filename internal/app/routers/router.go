@@ -31,7 +31,7 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 		{
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/logout", authHandler.Logout)
-			auth.POST("/check", authHandler.Check)
+			auth.GET("/check", authHandler.Check)
 		}
 
 		admin := v1.Group("/admin")
