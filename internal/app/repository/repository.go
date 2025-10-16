@@ -11,6 +11,7 @@ type StudentRepositoryInterface interface {
 type CourseRepositoryInterface interface {
 	CreateCourse(course *models.Course) error
 	DeleteCourse(courseID uint) error
+	FetchAllCourses() ([]models.Course, error)
 }
 
 type EnrollmentRepositoryInterface interface {

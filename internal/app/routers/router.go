@@ -11,7 +11,7 @@ import (
 )
 
 // InitRouter initialize routing information
-func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHandler, studentHandler *handler.StudentHandler) *gin.Engine {
+func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHandler, courseRegHandler *handler.CourseRegHandler) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery()) // panic 발생시 500
@@ -31,6 +31,7 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 		{
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/logout", authHandler.Logout)
+			auth.POST("/check", authHandler.Check)
 		}
 
 		admin := v1.Group("/admin")
@@ -41,16 +42,23 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 			admin.DELETE("students/reset", adminHandler.ResetStudents)
 
 			admin.POST("/courses", adminHandler.CreateCourse)
-			admin.DELETE("/courses/:id", adminHandler.DeleteCourse)
+			admin.DELETE("/courses/:course_id", adminHandler.DeleteCourse)
 
 			// admin.POST("/enrollments", adminHandler.AddEnrollment)
 			// admin.DELETE("/enrollments", adminHandler.CancelEnrollment)
 		}
 
-		student := v1.Group("/courses")
-		student.Use(middleware.AuthStudent()) // amdin도 쓸 수 있어야되나..?
+		courseReg := v1.Group("/courses")
+		courseReg.Use(middleware.Auth())
 		{
+			courseReg.GET("/", courseRegHandler.GetAllCourses)
+			// courseReg.POST("/:course_id/enroll", courseRegHandler.EnrollCourse)
+			// courseReg.DELETE("/:course_id/enroll", courseRegHandler.CancelEnrollment)
 
+			// courseReg.GET("/capacity-status", courseRegHandler.GetCoursesCapacityStatus)
+
+			// courseReg.POST("/:course_id/waitlist", courseRegHandler.AddToWaitlist)
+			// courseReg.DELETE("/:course_id/waitlist", courseRegHandler.DeleteToWaitlist)
 		}
 
 	}

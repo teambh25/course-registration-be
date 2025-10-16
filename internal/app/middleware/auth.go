@@ -19,13 +19,15 @@ func AuthAdmin() gin.HandlerFunc {
 	}
 }
 
-func AuthStudent() gin.HandlerFunc {
+func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
 		role := session.Get("role")
-		if role == nil { // || role != constant.RoleStudent
+		if role == nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		}
+		// c.Set("role", role)
+		// c.MustGet("role")
 		c.Next() // Request 이전
 	}
 }

@@ -8,3 +8,7 @@ type AdminServiceInterface interface {
 	CreateCourse(course *models.Course) (uint, error)
 	DeleteCourse(courseID uint) error
 }
+
+type CourseRegServiceInterface interface {
+	GetAllCourses() ([]models.Course, error)
+}

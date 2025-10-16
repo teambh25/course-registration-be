@@ -65,15 +65,14 @@ func (h *AdminHandler) CreateCourse(c *gin.Context) {
 }
 
 func (h *AdminHandler) DeleteCourse(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	course_id, err := strconv.Atoi(c.Param("course_id"))
 	if err != nil {
 		log.Println("delete course failed:", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 강의 id"})
 		return
 	}
 
-	courseID := uint(id)
-	if err := h.adminService.DeleteCourse(courseID); err != nil {
+	if err := h.adminService.DeleteCourse(uint(course_id)); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "강의 삭제 실패"})
 	}
 
