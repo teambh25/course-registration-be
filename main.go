@@ -8,10 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"course-reg/internal/app/handler"
-	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
 	"course-reg/internal/app/routers"
 	"course-reg/internal/app/service"
+	"course-reg/internal/pkg/database"
 	"course-reg/internal/pkg/setting"
 	"course-reg/internal/pkg/util"
 )
@@ -23,7 +23,7 @@ func init() {
 }
 
 func main() {
-	db := models.Setup()
+	db := database.Setup()
 	studentRepo := repository.NewStudentRepository(db)
 	courseRepo := repository.NewCourseRepository(db)
 	enrollRepo := repository.NewEnrollmentRepository(db)

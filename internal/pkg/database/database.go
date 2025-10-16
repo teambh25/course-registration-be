@@ -1,6 +1,7 @@
-package models
+package database
 
 import (
+	"course-reg/internal/app/models"
 	"log"
 	"time"
 
@@ -16,7 +17,7 @@ func Setup() *gorm.DB {
 		panic(err)
 	}
 
-	if err := db.AutoMigrate(&Student{}, &Course{}); err != nil {
+	if err := db.AutoMigrate(&models.Student{}, &models.Course{}); err != nil {
 		log.Fatal("failed to migrate database:", err)
 		panic(err)
 	}

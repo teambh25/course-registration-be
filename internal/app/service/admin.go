@@ -7,15 +7,15 @@ import (
 )
 
 type AdminService struct {
-	studentRepo *repository.StudentRepository
-	courseRepo  *repository.CourseRepository
-	enrollRepo  *repository.EnrollmentRepository
+	studentRepo repository.StudentRepositoryInterface
+	courseRepo  repository.CourseRepositoryInterface
+	enrollRepo  repository.EnrollmentRepositoryInterface
 }
 
 func NewAdminService(
-	s *repository.StudentRepository,
-	c *repository.CourseRepository,
-	e *repository.EnrollmentRepository,
+	s repository.StudentRepositoryInterface,
+	c repository.CourseRepositoryInterface,
+	e repository.EnrollmentRepositoryInterface,
 ) *AdminService {
 	return &AdminService{
 		studentRepo: s,

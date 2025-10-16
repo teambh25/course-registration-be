@@ -11,10 +11,10 @@ import (
 )
 
 type AdminHandler struct {
-	adminService *service.AdminService
+	adminService service.AdminServiceInterface
 }
 
-func NewAdminHandler(s *service.AdminService) *AdminHandler {
+func NewAdminHandler(s service.AdminServiceInterface) *AdminHandler {
 	return &AdminHandler{adminService: s}
 }
 
