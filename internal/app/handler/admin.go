@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"course-reg/internal/app/dto"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/service"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -65,15 +65,15 @@ func (h *AdminHandler) CreateCourse(c *gin.Context) {
 }
 
 func (h *AdminHandler) DeleteCourse(c *gin.Context) {
-	var req dto.DeleteCourseRequset
-
-	if err := c.ShouldBindJSON(&req); err != nil {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
 		log.Println("delete course failed:", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 코스 id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 강의 id"})
 		return
 	}
 
-	if err := h.adminService.DeleteCourse(req.CourseID); err != nil {
+	courseID := uint(id)
+	if err := h.adminService.DeleteCourse(courseID); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "강의 삭제 실패"})
 	}
 
