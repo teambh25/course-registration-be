@@ -25,7 +25,7 @@ func NewAdminService(
 }
 
 func (s *AdminService) RegisterStudents(students []models.Student) error {
-	err := s.studentRepo.InsertStudents(students)
+	err := s.studentRepo.BulkInsertStudents(students)
 	if err != nil {
 		log.Println("register students failed:", err.Error())
 	}
@@ -57,8 +57,23 @@ func (s *AdminService) DeleteCourse(courseID uint) error {
 	return err
 }
 
-// func (s *AdminService) GetEnrolledStudentsByCourse(courseID uint) ([]Student, error)
+func (s *AdminService) RegisterCourses(courses []models.Course) error {
+	err := s.courseRepo.BulkInsertCourses(courses)
+	if err != nil {
+		log.Println("register courses failed:", err.Error())
+	}
+	return err
+}
 
+func (s *AdminService) ResetCourses() error {
+	err := s.courseRepo.DeleteAllCourses()
+	if err != nil {
+		log.Println("reset courses failed:", err.Error())
+	}
+	return err
+}
+
+// func (s *AdminService) GetEnrolledStudentsByCourse(courseID uint) ([]Student, error)
 // func (s *AdminService) ForceEnrollStudent(courseID uint, studentID uint) error
 // func (s *AdminService) CancelEnrollment(courseID uint, studentID uint) error
 // func (s *AdminService) CheckDuplicateCourses(studentID uint, courseID uint) ([]Course, error)

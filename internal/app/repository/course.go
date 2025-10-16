@@ -15,6 +15,26 @@ func NewCourseRepository(db *gorm.DB) *CourseRepository {
 	return &CourseRepository{db: db}
 }
 
+func (r *CourseRepository) BulkInsertCourses(courses []models.Course) error {
+	tx := r.db.Begin()
+	if err := tx.CreateInBatches(courses, 100).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("create in batches failed: %w", err)
+	}
+	tx.Commit()
+	return nil
+}
+
+func (r *CourseRepository) DeleteAllCourses() error {
+	if err := r.db.Migrator().DropTable(&models.Course{}); err != nil {
+		return fmt.Errorf("drop table failed: %w", err)
+	}
+	if err := r.db.AutoMigrate(&models.Course{}); err != nil {
+		return fmt.Errorf("auto migrate failed: %w", err)
+	}
+	return nil
+}
+
 func (r *CourseRepository) CreateCourse(course *models.Course) error {
 	result := r.db.Create(course)
 	if result.Error != nil {

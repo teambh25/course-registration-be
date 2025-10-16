@@ -19,7 +19,7 @@ func (m *MockStudentRepository) GetPassword(username string) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockStudentRepository) InsertStudents(students []models.Student) error {
+func (m *MockStudentRepository) BulkInsertStudents(students []models.Student) error {
 	args := m.Called(students)
 	return args.Error(0)
 }
@@ -44,6 +44,16 @@ func (m *MockCourseRepository) DeleteCourse(courseID uint) error {
 	return args.Error(0)
 }
 
+func (m *MockCourseRepository) BulkInsertCourses(courses []models.Course) error {
+	args := m.Called(courses)
+	return args.Error(0)
+}
+
+func (m *MockCourseRepository) DeleteAllCourses() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
 type MockEnrollmentRepository struct {
 	mock.Mock
 }
@@ -55,7 +65,7 @@ func setupAdminServiceTest(t *testing.T) (*service.AdminService, *MockStudentRep
 
 	adminService := service.NewAdminService(
 		mockStudentRepo,
-		mockCourseRepo,
+		nil, // mockCourseRepo
 		mockEnrollRepo,
 	)
 

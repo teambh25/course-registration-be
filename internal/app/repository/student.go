@@ -24,7 +24,7 @@ func (r *StudentRepository) GetPassword(username string) (string, error) {
 	return student.BirthDate, result.Error
 }
 
-func (r *StudentRepository) InsertStudents(students []models.Student) error {
+func (r *StudentRepository) BulkInsertStudents(students []models.Student) error {
 	tx := r.db.Begin()
 	if err := tx.CreateInBatches(students, 100).Error; err != nil {
 		tx.Rollback()

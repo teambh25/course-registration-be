@@ -43,6 +43,8 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 
 			admin.POST("/courses", adminHandler.CreateCourse)
 			admin.DELETE("/courses/:course_id", adminHandler.DeleteCourse)
+			admin.POST("/courses/register", adminHandler.RegisterCourses)
+			admin.DELETE("courses/reset", adminHandler.ResetCourses)
 
 			// admin.POST("/enrollments", adminHandler.AddEnrollment)
 			// admin.DELETE("/enrollments", adminHandler.CancelEnrollment)

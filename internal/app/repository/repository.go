@@ -4,11 +4,13 @@ import "course-reg/internal/app/models"
 
 type StudentRepositoryInterface interface {
 	GetPassword(username string) (string, error)
-	InsertStudents(students []models.Student) error
+	BulkInsertStudents(students []models.Student) error
 	DeleteAllStudents() error
 }
 
 type CourseRepositoryInterface interface {
+	BulkInsertCourses(courses []models.Course) error
+	DeleteAllCourses() error
 	CreateCourse(course *models.Course) error
 	DeleteCourse(courseID uint) error
 	FetchAllCourses() ([]models.Course, error)
