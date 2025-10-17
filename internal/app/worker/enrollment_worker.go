@@ -45,34 +45,35 @@ func NewEnrollmentWorker(queueSize int) *EnrollmentWorker {
 	}
 }
 
-// Start initializes cache and starts worker goroutine
-func (w *EnrollmentWorker) Start() {
-	// w.cache.LoadCourses(courses)
-	// w.cache.LoadEnrollments(enrollments)
-	// w.cache.BuildConflictGraph()
-
-	go w.worker()
+func (w *EnrollmentWorker) LoadInitStudents(students []models.Student) {
+	w.cache.LoadInitStudents(students)
 }
 
-// RebuildConflictGraph rebuilds conflict graph when courses are updated
-func (w *EnrollmentWorker) RebuildConflictGraph(courses []models.Course) {
-	w.cache.LoadCourses(courses)
-	w.cache.BuildConflictGraph()
+func (w *EnrollmentWorker) LoadInitCourses(courses []models.Course) {
+	w.cache.LoadInitCourses(courses)
 }
 
-// AddCourse adds a single course to cache
 func (w *EnrollmentWorker) AddCourse(course models.Course) {
 	w.cache.AddCourse(course)
 }
 
-// RemoveCourse removes a course from cache
 func (w *EnrollmentWorker) RemoveCourse(courseID uint) {
 	w.cache.RemoveCourse(courseID)
 }
 
-// ClearAllCourses clears all courses from cache
 func (w *EnrollmentWorker) ClearAllCourses() {
 	w.cache.ClearAllCourses()
+}
+
+func (w *EnrollmentWorker) ClearAllStudents() {
+	w.cache.ClearAllStudents()
+}
+
+func (w *EnrollmentWorker) Start(students []models.Student, courses []models.Course) {
+	// todo: cache pre-load
+	w.LoadInitStudents(students)
+	w.LoadInitCourses(courses)
+	go w.worker()
 }
 
 // worker processes all enrollment requests sequentially
@@ -117,6 +118,18 @@ func (w *EnrollmentWorker) Enroll(studentID, courseID uint) EnrollmentResponse {
 	}
 }
 
+// GetAllRemainingSeats sends read request to worker
+func (w *EnrollmentWorker) GetAllRemainingSeats() map[uint]int {
+	req := EnrollmentRequest{
+		Type:     READ_ALL,
+		Response: make(chan EnrollmentResponse, 1),
+	}
+
+	w.requestChan <- req
+	resp := <-req.Response
+	return resp.AllRemainingSeats
+}
+
 // CancelEnrollment sends cancel request to worker
 func (w *EnrollmentWorker) CancelEnrollment(studentID, courseID uint) EnrollmentResponse {
 	req := EnrollmentRequest{
@@ -137,18 +150,6 @@ func (w *EnrollmentWorker) CancelEnrollment(studentID, courseID uint) Enrollment
 			Message: "요청 타임아웃",
 		}
 	}
-}
-
-// GetAllRemainingSeats sends read request to worker
-func (w *EnrollmentWorker) GetAllRemainingSeats() map[uint]int {
-	req := EnrollmentRequest{
-		Type:     READ_ALL,
-		Response: make(chan EnrollmentResponse, 1),
-	}
-
-	w.requestChan <- req
-	resp := <-req.Response
-	return resp.AllRemainingSeats
 }
 
 // processEnroll handles enrollment logic

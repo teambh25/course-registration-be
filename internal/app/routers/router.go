@@ -47,7 +47,7 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 			admin.POST("/courses/register", adminHandler.RegisterCourses)
 			admin.DELETE("courses/reset", adminHandler.ResetCourses)
 
-			admin.POST("/registration-period", adminHandler.SetRegistrationPeriod)
+			admin.PUT("/registration-period", adminHandler.SetRegistrationPeriod)
 			admin.GET("/registration-period", adminHandler.GetRegistrationPeriod)
 
 			// admin.POST("/enrollments", adminHandler.AddEnrollment)
@@ -62,7 +62,8 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 			// courseReg.Use(middleware.CheckRegistrationPeriod(timeProvider))
 			{
 				courseReg.POST("/:course_id/enroll", courseRegHandler.EnrollCourse)
-				courseReg.DELETE("/:course_id/enroll", courseRegHandler.CancelEnrollment)
+				// courseReg.DELETE("/:course_id/enroll", courseRegHandler.CancelEnrollment)
+
 				// courseReg.GET("/capacity", courseRegHandler.GetCoursesCapacityStatus)
 
 				// courseReg.POST("/:course_id/waitlist", courseRegHandler.AddToWaitlist)

@@ -33,16 +33,21 @@ func (s *AdminService) RegisterStudents(students []models.Student) error {
 	err := s.studentRepo.BulkInsertStudents(students)
 	if err != nil {
 		log.Println("register students failed:", err.Error())
+		return err
 	}
-	return err
+	s.enrollmentWorker.LoadInitStudents(students)
+	return nil
 }
 
 func (s *AdminService) ResetStudents() error {
 	err := s.studentRepo.DeleteAllStudents()
 	if err != nil {
 		log.Println("reset students failed:", err.Error())
+		return err
 	}
-	return err
+	s.enrollmentWorker.ClearAllStudents()
+	return nil
+
 }
 
 func (s *AdminService) CreateCourse(course *models.Course) (uint, error) {
@@ -64,8 +69,7 @@ func (s *AdminService) DeleteCourse(courseID uint) error {
 		return err
 	}
 
-	// todo : 수강 신청 기간 중에 강의 삭제시 (동시성 처리 필요)
-	// s.enrollmentWorker.RemoveCourse(courseID)
+	s.enrollmentWorker.RemoveCourse(courseID)
 
 	return nil
 }
@@ -78,6 +82,8 @@ func (s *AdminService) RegisterCourses(courses []models.Course) error {
 		log.Println("register courses failed:", err.Error())
 		return err
 	}
+
+	s.enrollmentWorker.LoadInitCourses(courses)
 	return nil
 }
 
@@ -89,6 +95,8 @@ func (s *AdminService) ResetCourses() error {
 		log.Println("reset courses failed:", err.Error())
 		return err
 	}
+
+	s.enrollmentWorker.ClearAllCourses()
 	return nil
 }
 

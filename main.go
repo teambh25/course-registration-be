@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"course-reg/internal/app/handler"
+	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
 	"course-reg/internal/app/routers"
 	"course-reg/internal/app/service"
@@ -35,19 +36,25 @@ func main() {
 
 	enrollmentWorker := worker.NewEnrollmentWorker(1000)
 
-	// todo : 이전의 db 데이터 로딩
-	// courses, err := courseRepo.FetchAllCourses()
-	// if err != nil {
-	// 	log.Printf("[warning] failed to load courses: %v", err)
-	// 	courses = []models.Course{}
-	// }
+	courses, err := courseRepo.FetchAllCourses()
+	if err != nil {
+		log.Printf("[warning] failed to load courses: %v", err)
+		courses = []models.Course{}
+	}
+	stduents, err := studentRepo.FetchAllStudents()
+	if err != nil {
+		log.Printf("[warning] failed to load courses: %v", err)
+		stduents = []models.Student{}
+	}
+
+	// todo : 이전의 enroll 데이터 로딩
 	// enrollments, err := enrollRepo.LoadAllEnrollments()
 	// if err != nil {
 	// 	log.Printf("[warning] failed to load enrollments: %v", err)
 	// 	enrollments = []models.Enrollment{}
 	// }
 
-	enrollmentWorker.Start()
+	enrollmentWorker.Start(stduents, courses)
 
 	timeProvider := util.NewKoreaTimeProvider()
 

@@ -6,6 +6,7 @@ type StudentRepositoryInterface interface {
 	GetPassword(username string) (string, error)
 	BulkInsertStudents(students []models.Student) error
 	DeleteAllStudents() error
+	FetchAllStudents() ([]models.Student, error)
 }
 
 type CourseRepositoryInterface interface {

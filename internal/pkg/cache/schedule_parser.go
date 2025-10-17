@@ -9,10 +9,10 @@ import (
 // TimeSlot represents a single time slot (day + start-end time)
 type TimeSlot struct {
 	Day       string // "월", "화", "수", "목", "금", "토", "일"
-	StartHour int    // 9
-	StartMin  int    // 10
-	EndHour   int    // 11
-	EndMin    int    // 30
+	StartHour int    //
+	StartMin  int    //
+	EndHour   int    //
+	EndMin    int    //
 }
 
 // ParseSchedule parses schedule string like "월 09:10~11:30, 수 17:10~19:20"
@@ -72,8 +72,8 @@ func HasConflict(slot1, slot2 TimeSlot) bool {
 	return start1 < end2 && start2 < end1
 }
 
-// DoSchedulesConflict checks if two schedule strings conflict
-func DoSchedulesConflict(schedule1, schedule2 string) bool {
+// SchedulesConflict checks if two schedule strings conflict
+func SchedulesConflict(schedule1, schedule2 string) bool {
 	slots1 := ParseSchedule(schedule1)
 	slots2 := ParseSchedule(schedule2)
 

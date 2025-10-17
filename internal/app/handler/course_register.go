@@ -30,7 +30,7 @@ func (h *CourseRegHandler) GetAllCourses(c *gin.Context) {
 
 func (h *CourseRegHandler) EnrollCourse(c *gin.Context) {
 	// TODO: Get studentID from session
-	studentID := uint(1) // placeholder
+	studentID := uint(1)
 
 	courseID, err := strconv.Atoi(c.Param("course_id"))
 	if err != nil {
@@ -50,8 +50,8 @@ func (h *CourseRegHandler) EnrollCourse(c *gin.Context) {
 }
 
 func (h *CourseRegHandler) CancelEnrollment(c *gin.Context) {
-	// TODO: Get studentID from session
-	studentID := uint(1) // placeholder
+	// todo : Get studentID from session
+	studentID := uint(1)
 
 	courseID, err := strconv.Atoi(c.Param("course_id"))
 	if err != nil {

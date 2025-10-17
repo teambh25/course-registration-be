@@ -43,3 +43,12 @@ func (r *StudentRepository) DeleteAllStudents() error {
 	}
 	return nil
 }
+
+func (r *StudentRepository) FetchAllStudents() ([]models.Student, error) {
+	var students []models.Student
+	result := r.db.Find(&students)
+	if result.Error != nil {
+		return nil, fmt.Errorf("select failed: %w", result.Error)
+	}
+	return students, nil
+}
