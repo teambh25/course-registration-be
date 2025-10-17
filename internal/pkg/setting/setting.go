@@ -89,8 +89,8 @@ func ParsePeriodTime(timeStr string) (time.Time, error) {
 	return time.Parse("2006-01-02-15-04", timeStr)
 }
 
-// IsWithinRegistrationPeriod checks if current time is within registration period
-func IsWithinRegistrationPeriod() (bool, error) {
+// IsWithinRegistrationPeriod checks if given time is within registration period
+func IsWithinRegistrationPeriod(now time.Time) (bool, error) {
 	if RegistrationPeriodSetting.StartTime == "" || RegistrationPeriodSetting.EndTime == "" {
 		return false, nil
 	}
@@ -104,13 +104,6 @@ func IsWithinRegistrationPeriod() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
-	// Get current time in Korea timezone (KST)
-	koreaLocation, err := time.LoadLocation("Asia/Seoul")
-	if err != nil {
-		return false, err
-	}
-	now := time.Now().In(koreaLocation)
 
 	return now.After(startTime) && now.Before(endTime), nil
 }

@@ -49,6 +49,8 @@ func main() {
 
 	enrollmentWorker.Start()
 
+	timeProvider := util.NewKoreaTimeProvider()
+
 	authService := service.NewAuthService(studentRepo)
 	adminService := service.NewAdminService(studentRepo, courseRepo, enrollRepo, enrollmentWorker)
 	courseRegService := service.NewCourseRegService(courseRepo, enrollRepo, enrollmentWorker)
@@ -58,7 +60,7 @@ func main() {
 	courseRegHandler := handler.NewCourseRegHandler(courseRegService)
 
 	gin.SetMode(setting.ServerSetting.RunMode)
-	routersInit := routers.InitRouter(adminHandler, authHandler, courseRegHandler)
+	routersInit := routers.InitRouter(adminHandler, authHandler, courseRegHandler, timeProvider)
 
 	readTimeout := setting.ServerSetting.ReadTimeout
 	writeTimeout := setting.ServerSetting.WriteTimeout

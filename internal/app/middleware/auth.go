@@ -27,7 +27,7 @@ func Auth() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		}
 		// c.Set("role", role)
-		// c.MustGet("role")
+		// c.MustGet("role")w
 		c.Next() // Request 이전
 	}
 }

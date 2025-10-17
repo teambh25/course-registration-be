@@ -8,10 +8,11 @@ import (
 	"course-reg/internal/app/handler"
 	"course-reg/internal/app/middleware"
 	"course-reg/internal/pkg/setting"
+	"course-reg/internal/pkg/util"
 )
 
 // InitRouter initialize routing information
-func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHandler, courseRegHandler *handler.CourseRegHandler) *gin.Engine {
+func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHandler, courseRegHandler *handler.CourseRegHandler, timeProvider util.TimeProvider) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery()) // panic 발생시 500
@@ -53,20 +54,21 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 			// admin.DELETE("/enrollments", adminHandler.CancelEnrollment)
 		}
 
-		courseReg := v1.Group("/courses")
-		courseReg.Use(middleware.Auth())
+		user := v1.Group("/user")
+		// user.Use(middleware.Auth())
 		{
-			courseReg.GET("/", courseRegHandler.GetAllCourses)
+			user.GET("/courses", courseRegHandler.GetAllCourses)
+			courseReg := user.Group("/course-reg")
+			// courseReg.Use(middleware.CheckRegistrationPeriod(timeProvider))
+			{
+				courseReg.POST("/:course_id/enroll", courseRegHandler.EnrollCourse)
+				courseReg.DELETE("/:course_id/enroll", courseRegHandler.CancelEnrollment)
+				// courseReg.GET("/capacity", courseRegHandler.GetCoursesCapacityStatus)
 
-			// courseReg.POST("/:course_id/enroll", courseRegHandler.EnrollCourse)
-			// courseReg.DELETE("/:course_id/enroll", courseRegHandler.CancelEnrollment)
-
-			// courseReg.GET("/capacity-status", courseRegHandler.GetCoursesCapacityStatus)
-
-			// courseReg.POST("/:course_id/waitlist", courseRegHandler.AddToWaitlist)
-			// courseReg.DELETE("/:course_id/waitlist", courseRegHandler.DeleteToWaitlist)
+				// courseReg.POST("/:course_id/waitlist", courseRegHandler.AddToWaitlist)
+				// courseReg.DELETE("/:course_id/waitlist", courseRegHandler.DeleteToWaitlist)
+			}
 		}
-
 	}
 	return r
 }

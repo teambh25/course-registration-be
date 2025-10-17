@@ -52,8 +52,7 @@ func (s *AdminService) CreateCourse(course *models.Course) (uint, error) {
 		return 0, err
 	}
 
-	// todo : 수강 신청 기간 중에 강의 추가 발생시 (동시성 처리 필요)
-	// s.enrollmentWorker.AddCourse(*course)
+	s.enrollmentWorker.AddCourse(*course)
 
 	return course.ID, nil
 }
