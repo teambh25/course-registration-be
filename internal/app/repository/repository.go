@@ -17,4 +17,7 @@ type CourseRepositoryInterface interface {
 }
 
 type EnrollmentRepositoryInterface interface {
+	SaveEnrollment(enrollment *models.Enrollment) error
+	DeleteEnrollment(studentID uint, courseID uint) error
+	LoadAllEnrollments() ([]models.Enrollment, error)
 }

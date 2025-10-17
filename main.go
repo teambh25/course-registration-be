@@ -11,6 +11,7 @@ import (
 	"course-reg/internal/app/repository"
 	"course-reg/internal/app/routers"
 	"course-reg/internal/app/service"
+	"course-reg/internal/app/worker"
 	"course-reg/internal/pkg/database"
 	"course-reg/internal/pkg/setting"
 	"course-reg/internal/pkg/util"
@@ -28,9 +29,29 @@ func main() {
 	courseRepo := repository.NewCourseRepository(db)
 	enrollRepo := repository.NewEnrollmentRepository(db)
 
+	// todo : log 파일을 통한 배치 쓰기로 변겨할 예정
+	// dbWorker := worker.NewDBWorker(enrollRepo)
+	// dbWorker.Start()
+
+	enrollmentWorker := worker.NewEnrollmentWorker(1000)
+
+	// todo : 이전의 db 데이터 로딩
+	// courses, err := courseRepo.FetchAllCourses()
+	// if err != nil {
+	// 	log.Printf("[warning] failed to load courses: %v", err)
+	// 	courses = []models.Course{}
+	// }
+	// enrollments, err := enrollRepo.LoadAllEnrollments()
+	// if err != nil {
+	// 	log.Printf("[warning] failed to load enrollments: %v", err)
+	// 	enrollments = []models.Enrollment{}
+	// }
+
+	enrollmentWorker.Start()
+
 	authService := service.NewAuthService(studentRepo)
-	adminService := service.NewAdminService(studentRepo, courseRepo, enrollRepo)
-	courseRegService := service.NewCourseRegService(courseRepo, enrollRepo)
+	adminService := service.NewAdminService(studentRepo, courseRepo, enrollRepo, enrollmentWorker)
+	courseRegService := service.NewCourseRegService(courseRepo, enrollRepo, enrollmentWorker)
 
 	authHandler := handler.NewAuthHandler(authService)
 	adminHandler := handler.NewAdminHandler(adminService)

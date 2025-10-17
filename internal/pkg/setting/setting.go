@@ -33,6 +33,13 @@ type Secret struct {
 
 var SecretSetting = &Secret{}
 
+type RegistrationPeriod struct {
+	StartTime string
+	EndTime   string
+}
+
+var RegistrationPeriodSetting = &RegistrationPeriod{}
+
 var cfg *ini.File
 
 // Setup initialize the configuration instance
@@ -46,6 +53,7 @@ func Setup() {
 	mapTo("app", AppSetting)
 	mapTo("server", ServerSetting)
 	mapTo("secret", SecretSetting)
+	mapTo("registration", RegistrationPeriodSetting)
 
 	ServerSetting.ReadTimeout = ServerSetting.ReadTimeout * time.Second
 	ServerSetting.WriteTimeout = ServerSetting.WriteTimeout * time.Second
@@ -57,4 +65,52 @@ func mapTo(section string, v interface{}) {
 	if err != nil {
 		log.Fatalf("Cfg.MapTo %s err: %v", section, err)
 	}
+}
+
+// SaveRegistrationPeriod saves registration period to config file
+func SaveRegistrationPeriod(startTime, endTime string) error {
+	cfg.Section("registration").Key("StartTime").SetValue(startTime)
+	cfg.Section("registration").Key("EndTime").SetValue(endTime)
+
+	err := cfg.SaveTo("conf/app.ini")
+	if err != nil {
+		return err
+	}
+
+	// Update in-memory setting
+	RegistrationPeriodSetting.StartTime = startTime
+	RegistrationPeriodSetting.EndTime = endTime
+
+	return nil
+}
+
+// ParsePeriodTime parses time string in format "yyyy-mm-dd-hh-mm"
+func ParsePeriodTime(timeStr string) (time.Time, error) {
+	return time.Parse("2006-01-02-15-04", timeStr)
+}
+
+// IsWithinRegistrationPeriod checks if current time is within registration period
+func IsWithinRegistrationPeriod() (bool, error) {
+	if RegistrationPeriodSetting.StartTime == "" || RegistrationPeriodSetting.EndTime == "" {
+		return false, nil
+	}
+
+	startTime, err := ParsePeriodTime(RegistrationPeriodSetting.StartTime)
+	if err != nil {
+		return false, err
+	}
+
+	endTime, err := ParsePeriodTime(RegistrationPeriodSetting.EndTime)
+	if err != nil {
+		return false, err
+	}
+
+	// Get current time in Korea timezone (KST)
+	koreaLocation, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+		return false, err
+	}
+	now := time.Now().In(koreaLocation)
+
+	return now.After(startTime) && now.Before(endTime), nil
 }

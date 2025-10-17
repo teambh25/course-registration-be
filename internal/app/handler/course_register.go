@@ -4,6 +4,7 @@ import (
 	"course-reg/internal/app/service"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,5 +25,46 @@ func (h *CourseRegHandler) GetAllCourses(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"course_id": courses})
+	c.JSON(http.StatusOK, gin.H{"courses": courses})
+}
+
+func (h *CourseRegHandler) EnrollCourse(c *gin.Context) {
+	// TODO: Get studentID from session
+	studentID := uint(1) // placeholder
+
+	courseID, err := strconv.Atoi(c.Param("course_id"))
+	if err != nil {
+		log.Println("enroll course failed:", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 강의 ID"})
+		return
+	}
+
+	success, message, allSeats, waitlistPos := h.courseRegService.Enroll(studentID, uint(courseID))
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":           success,
+		"message":           message,
+		"remaining_seats":   allSeats,
+		"waitlist_position": waitlistPos,
+	})
+}
+
+func (h *CourseRegHandler) CancelEnrollment(c *gin.Context) {
+	// TODO: Get studentID from session
+	studentID := uint(1) // placeholder
+
+	courseID, err := strconv.Atoi(c.Param("course_id"))
+	if err != nil {
+		log.Println("cancel enrollment failed:", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 강의 ID"})
+		return
+	}
+
+	success, message, allSeats := h.courseRegService.CancelEnrollment(studentID, uint(courseID))
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":         success,
+		"message":         message,
+		"remaining_seats": allSeats,
+	})
 }

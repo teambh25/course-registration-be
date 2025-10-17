@@ -35,7 +35,7 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 		}
 
 		admin := v1.Group("/admin")
-		admin.Use(middleware.AuthAdmin())
+		// admin.Use(middleware.AuthAdmin())
 		{
 
 			admin.POST("students/register", adminHandler.RegisterStudents)
@@ -46,6 +46,9 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 			admin.POST("/courses/register", adminHandler.RegisterCourses)
 			admin.DELETE("courses/reset", adminHandler.ResetCourses)
 
+			admin.POST("/registration-period", adminHandler.SetRegistrationPeriod)
+			admin.GET("/registration-period", adminHandler.GetRegistrationPeriod)
+
 			// admin.POST("/enrollments", adminHandler.AddEnrollment)
 			// admin.DELETE("/enrollments", adminHandler.CancelEnrollment)
 		}
@@ -54,6 +57,7 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 		courseReg.Use(middleware.Auth())
 		{
 			courseReg.GET("/", courseRegHandler.GetAllCourses)
+
 			// courseReg.POST("/:course_id/enroll", courseRegHandler.EnrollCourse)
 			// courseReg.DELETE("/:course_id/enroll", courseRegHandler.CancelEnrollment)
 

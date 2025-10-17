@@ -17,7 +17,7 @@ func Setup() *gorm.DB {
 		panic(err)
 	}
 
-	if err := db.AutoMigrate(&models.Student{}, &models.Course{}); err != nil {
+	if err := db.AutoMigrate(&models.Student{}, &models.Course{}, &models.Enrollment{}); err != nil {
 		log.Fatal("failed to migrate database:", err)
 		panic(err)
 	}

@@ -9,8 +9,12 @@ type AdminServiceInterface interface {
 	ResetCourses() error
 	CreateCourse(course *models.Course) (uint, error)
 	DeleteCourse(courseID uint) error
+	SetRegistrationPeriod(startTime, endTime string) error
+	GetRegistrationPeriod() (startTime, endTime string, err error)
 }
 
 type CourseRegServiceInterface interface {
 	GetAllCourses() ([]models.Course, error)
+	Enroll(studentID, courseID uint) (success bool, message string, allSeats map[uint]int, waitlistPos int)
+	CancelEnrollment(studentID, courseID uint) (success bool, message string, allSeats map[uint]int)
 }

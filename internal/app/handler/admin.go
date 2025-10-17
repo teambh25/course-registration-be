@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"course-reg/internal/app/dto"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/service"
 	"log"
@@ -102,4 +103,34 @@ func (h *AdminHandler) ResetCourses(c *gin.Context) {
 	}
 
 	c.Status(http.StatusOK)
+}
+
+func (h *AdminHandler) SetRegistrationPeriod(c *gin.Context) {
+	var req dto.SetRegistrationPeriodRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Println("set registration period failed:", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 요청 형식"})
+		return
+	}
+
+	if err := h.adminService.SetRegistrationPeriod(req.StartTime, req.EndTime); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": ""})
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
+func (h *AdminHandler) GetRegistrationPeriod(c *gin.Context) {
+	startTime, endTime, err := h.adminService.GetRegistrationPeriod()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "수강 신청 기간 조회 실패"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"start_time": startTime,
+		"end_time":   endTime,
+	})
 }
