@@ -1,6 +1,6 @@
 package constant
 
-type UserRole int
+type UserRole int // todo: string으로 바꾸기?
 
 const (
 	RoleAdmin UserRole = iota + 1

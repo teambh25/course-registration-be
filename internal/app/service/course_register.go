@@ -4,6 +4,7 @@ import (
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
 	"course-reg/internal/app/worker"
+	"course-reg/internal/pkg/constant"
 	"log"
 )
 
@@ -33,12 +34,12 @@ func (s *CourseRegService) GetAllCourses() ([]models.Course, error) {
 	return courses, err
 }
 
-func (s *CourseRegService) Enroll(studentID, courseID uint) (bool, string, map[uint]int, int) {
+func (s *CourseRegService) Enroll(studentID, courseID uint) (bool, string, map[uint]constant.CourseStatus, int) {
 	resp := s.enrollmentWorker.Enroll(studentID, courseID)
-	return resp.Success, resp.Message, resp.AllRemainingSeats, resp.WaitlistPosition
+	return resp.Success, resp.Message, resp.CourseStatuses, resp.WaitlistPosition
 }
 
-func (s *CourseRegService) CancelEnrollment(studentID, courseID uint) (bool, string, map[uint]int) {
-	resp := s.enrollmentWorker.CancelEnrollment(studentID, courseID)
-	return resp.Success, resp.Message, resp.AllRemainingSeats
-}
+// func (s *CourseRegService) CancelEnrollment(studentID, courseID uint) (bool, string, map[uint]int) {
+// 	resp := s.enrollmentWorker.CancelEnrollment(studentID, courseID)
+// 	return resp.Success, resp.Message, resp.CourseStatuses
+// }

@@ -2,6 +2,8 @@ package cache
 
 import (
 	"course-reg/internal/app/models"
+	"course-reg/internal/pkg/constant"
+	"course-reg/internal/pkg/util"
 	"fmt"
 	"sort"
 )
@@ -21,7 +23,7 @@ type EnrollmentCache struct {
 }
 
 func NewEnrollmentCache() *EnrollmentCache {
-	// todo : init cache
+	// todo: init cache
 
 	return &EnrollmentCache{
 		Courses:          make(map[uint]*models.Course),
@@ -52,8 +54,6 @@ func (c *EnrollmentCache) LoadInitStudents(students []models.Student) {
 	for _, s := range students {
 		c.StudentCourses[s.ID] = make(map[uint]bool)
 	}
-
-	c.DebugPrint()
 }
 
 func (c *EnrollmentCache) LoadInitCourses(courses []models.Course) {
@@ -64,18 +64,14 @@ func (c *EnrollmentCache) LoadInitCourses(courses []models.Course) {
 			c.WaitingStudents[courses[i].ID] = []uint{}
 		}
 	}
-	c.BuildConflictGraph()
-
-	c.DebugPrint()
 }
 
 func (c *EnrollmentCache) BuildConflictGraph() {
 	c.ConflictGraph = make(map[uint]map[uint]bool)
-
 	for id1, course1 := range c.Courses {
 		c.ConflictGraph[id1] = make(map[uint]bool)
 		for id2, course2 := range c.Courses {
-			if id1 != id2 && SchedulesConflict(course1.Schedules, course2.Schedules) {
+			if id1 != id2 && util.SchedulesConflict(course1.Schedules, course2.Schedules) {
 				c.ConflictGraph[id1][id2] = true
 			}
 		}
@@ -94,13 +90,11 @@ func (c *EnrollmentCache) AddCourse(course models.Course) {
 
 	// Check conflicts with all existing courses
 	for id, existingCourse := range c.Courses {
-		if id != course.ID && SchedulesConflict(course.Schedules, existingCourse.Schedules) {
+		if id != course.ID && util.SchedulesConflict(course.Schedules, existingCourse.Schedules) {
 			c.ConflictGraph[course.ID][id] = true
 			c.ConflictGraph[id][course.ID] = true
 		}
 	}
-
-	c.DebugPrint()
 }
 
 // RemoveCourse removes a course and updates conflict graph
@@ -115,8 +109,6 @@ func (c *EnrollmentCache) RemoveCourse(courseID uint) {
 	for id := range c.ConflictGraph {
 		delete(c.ConflictGraph[id], courseID)
 	}
-
-	c.DebugPrint()
 }
 
 // ClearAllCourses clears all courses from cache
@@ -125,24 +117,83 @@ func (c *EnrollmentCache) ClearAllCourses() {
 	c.EnrolledStudents = make(map[uint][]uint)
 	c.WaitingStudents = make(map[uint][]uint)
 	c.ConflictGraph = make(map[uint]map[uint]bool)
-
-	c.DebugPrint()
 }
 
 func (c *EnrollmentCache) ClearAllStudents() {
 	c.StudentCourses = make(map[uint]map[uint]bool)
-
-	c.DebugPrint()
 }
 
-// GetAllRemainingSeats returns map of courseID -> remaining seats
-func (c *EnrollmentCache) GetAllRemainingSeats() map[uint]int {
-	result := make(map[uint]int)
+func (c *EnrollmentCache) GetAllCourseStatus() map[uint]constant.CourseStatus {
+	status := make(map[uint]constant.CourseStatus)
 	for courseID, course := range c.Courses {
-		enrolled := len(c.EnrolledStudents[courseID])
-		result[courseID] = course.Capacity - enrolled
+		if len(c.EnrolledStudents[courseID]) < course.Capacity {
+			status[courseID] = constant.CourseAvailable
+		} else if len(c.WaitingStudents[courseID]) < course.Capacity {
+			status[courseID] = constant.CourseWaitlist
+		} else {
+			status[courseID] = constant.CourseFull
+		}
 	}
-	return result
+	return status
+}
+
+// ========== Business Logic Methods for Testing ==========
+
+// GetCourse retrieves a course by ID
+func (c *EnrollmentCache) GetCourse(courseID uint) (*models.Course, bool) {
+	course, exists := c.Courses[courseID]
+	return course, exists
+}
+
+// IsStudentEnrolled checks if a student is already enrolled in a course
+func (c *EnrollmentCache) IsStudentEnrolled(studentID, courseID uint) bool {
+	return c.StudentCourses[studentID] != nil && c.StudentCourses[studentID][courseID]
+}
+
+// HasTimeConflict checks if enrolling in a course would create a time conflict
+func (c *EnrollmentCache) HasTimeConflict(studentID, courseID uint) bool {
+	if c.StudentCourses[studentID] == nil {
+		return false
+	}
+	for enrolledCourse := range c.StudentCourses[studentID] {
+		if c.ConflictGraph[courseID][enrolledCourse] {
+			return true
+		}
+	}
+	return false
+}
+
+// IsFull checks if a course has reached its enrollment capacity
+func (c *EnrollmentCache) IsFull(courseID uint) bool {
+	course, exists := c.Courses[courseID]
+	if !exists {
+		return true
+	}
+	return len(c.EnrolledStudents[courseID]) >= course.Capacity
+}
+
+// IsWaitlistFull checks if a course's waitlist has reached capacity
+func (c *EnrollmentCache) IsWaitlistFull(courseID uint) bool {
+	course, exists := c.Courses[courseID]
+	if !exists {
+		return true
+	}
+	return len(c.WaitingStudents[courseID]) >= course.Capacity
+}
+
+// EnrollStudent enrolls a student in a course
+func (c *EnrollmentCache) EnrollStudent(studentID, courseID uint) {
+	c.EnrolledStudents[courseID] = append(c.EnrolledStudents[courseID], studentID)
+	if c.StudentCourses[studentID] == nil {
+		c.StudentCourses[studentID] = make(map[uint]bool)
+	}
+	c.StudentCourses[studentID][courseID] = true
+}
+
+// AddToWaitlist adds a student to a course's waitlist and returns their position
+func (c *EnrollmentCache) AddToWaitlist(studentID, courseID uint) int {
+	c.WaitingStudents[courseID] = append(c.WaitingStudents[courseID], studentID)
+	return len(c.WaitingStudents[courseID])
 }
 
 func (c *EnrollmentCache) DebugPrint() {
@@ -206,5 +257,6 @@ func (c *EnrollmentCache) DebugPrint() {
 		fmt.Println("  (no student-course mappings)")
 	}
 
-	fmt.Println("===========================================\n")
+	fmt.Println("===========================================")
+	fmt.Println()
 }

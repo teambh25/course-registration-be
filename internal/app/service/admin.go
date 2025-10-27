@@ -75,7 +75,7 @@ func (s *AdminService) DeleteCourse(courseID uint) error {
 }
 
 func (s *AdminService) RegisterCourses(courses []models.Course) error {
-	// todo : course가 없을 때 처음 한번만 실행 가능하도록
+	// todo: course가 없을 때 처음 한번만 실행 가능하도록
 
 	err := s.courseRepo.BulkInsertCourses(courses)
 	if err != nil {
@@ -88,7 +88,7 @@ func (s *AdminService) RegisterCourses(courses []models.Course) error {
 }
 
 func (s *AdminService) ResetCourses() error {
-	// todo : 수강 신청 시작하면 reset 불가능
+	// todo: 수강 신청 시작하면 reset 불가능
 
 	err := s.courseRepo.DeleteAllCourses()
 	if err != nil {

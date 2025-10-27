@@ -24,8 +24,6 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 	store := memstore.NewStore([]byte(setting.SecretSetting.SessionKey)) // authentication key for session
 	r.Use(sessions.Sessions("course_reg_session", store))
 
-	// r.StaticFS("/export", http.Dir(export.GetExcelFullPath()))
-
 	v1 := r.Group("/api/v1")
 	{
 		auth := v1.Group("/auth")

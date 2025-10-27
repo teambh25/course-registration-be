@@ -1,6 +1,9 @@
 package service
 
-import "course-reg/internal/app/models"
+import (
+	"course-reg/internal/app/models"
+	"course-reg/internal/pkg/constant"
+)
 
 type AdminServiceInterface interface {
 	RegisterStudents(students []models.Student) error
@@ -15,6 +18,6 @@ type AdminServiceInterface interface {
 
 type CourseRegServiceInterface interface {
 	GetAllCourses() ([]models.Course, error)
-	Enroll(studentID, courseID uint) (success bool, message string, allSeats map[uint]int, waitlistPos int)
-	CancelEnrollment(studentID, courseID uint) (success bool, message string, allSeats map[uint]int)
+	Enroll(studentID, courseID uint) (success bool, message string, allSeats map[uint]constant.CourseStatus, waitlistPos int)
+	// CancelEnrollment(studentID, courseID uint) (success bool, message string, allSeats map[uint]int)
 }

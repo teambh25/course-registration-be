@@ -36,20 +36,20 @@ func main() {
 		log.Printf("[warning] failed to load courses: %v", err)
 		courses = []models.Course{}
 	}
-	stduents, err := studentRepo.FetchAllStudents()
+	students, err := studentRepo.FetchAllStudents()
 	if err != nil {
 		log.Printf("[warning] failed to load courses: %v", err)
-		stduents = []models.Student{}
+		students = []models.Student{}
 	}
 
-	// todo : 이전의 enroll 데이터 로딩
+	// todo: 이전의 enroll 데이터 로딩
 	// enrollments, err := enrollRepo.LoadAllEnrollments()
 	// if err != nil {
 	// 	log.Printf("[warning] failed to load enrollments: %v", err)
 	// 	enrollments = []models.Enrollment{}
 	// }
 
-	enrollmentWorker.Start(stduents, courses)
+	enrollmentWorker.Start(students, courses)
 
 	timeProvider := util.NewKoreaTimeProvider()
 
