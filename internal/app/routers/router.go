@@ -7,18 +7,18 @@ import (
 
 	"course-reg/internal/app/handler"
 	"course-reg/internal/app/middleware"
+	"course-reg/internal/pkg/constant"
 	"course-reg/internal/pkg/setting"
 	"course-reg/internal/pkg/util"
 )
 
 // InitRouter initialize routing information
 func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHandler, courseRegHandler *handler.CourseRegHandler, timeProvider util.TimeProvider) *gin.Engine {
+	gin.SetMode(setting.ServerSetting.RunMode) // set gin mode (must be called before gin.New())
 	r := gin.New()
 	r.Use(gin.Logger())
-	r.Use(gin.Recovery()) // panic 발생시 500
-
-	// CORS
-	r.Use(middleware.CORS())
+	r.Use(gin.Recovery())    // panic 발생시 500
+	r.Use(middleware.CORS()) // CORS
 
 	// session
 	store := memstore.NewStore([]byte(setting.SecretSetting.SessionKey)) // authentication key for session
@@ -37,6 +37,7 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 		// admin.Use(middleware.AuthAdmin())
 		{
 
+			// todo : 수강 신청 기간 중엔 학생/강의 수정 못하도록 변경
 			admin.POST("students/register", adminHandler.RegisterStudents)
 			admin.DELETE("students/reset", adminHandler.ResetStudents)
 
@@ -45,6 +46,7 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 			admin.POST("/courses/register", adminHandler.RegisterCourses)
 			admin.DELETE("courses/reset", adminHandler.ResetCourses)
 
+			// todo : 수강신청 start, pause 기능 만들기
 			admin.PUT("/registration-period", adminHandler.SetRegistrationPeriod)
 			admin.GET("/registration-period", adminHandler.GetRegistrationPeriod)
 
@@ -53,9 +55,10 @@ func InitRouter(adminHandler *handler.AdminHandler, authHandler *handler.AuthHan
 		}
 
 		user := v1.Group("/user")
-		// user.Use(middleware.Auth())
+		user.Use(middleware.Auth())
 		{
-			user.GET("/courses", courseRegHandler.GetAllCourses)
+			user.StaticFile("/courses", constant.StaticCoursesFilePath)
+
 			courseReg := user.Group("/course-reg")
 			// courseReg.Use(middleware.CheckRegistrationPeriod(timeProvider))
 			{

@@ -12,10 +12,10 @@ const (
 )
 
 type AuthService struct {
-	studentRepo *repository.StudentRepository
+	studentRepo repository.StudentRepositoryInterface
 }
 
-func NewAuthService(s *repository.StudentRepository) *AuthService {
+func NewAuthService(s repository.StudentRepositoryInterface) *AuthService {
 	return &AuthService{studentRepo: s}
 }
 

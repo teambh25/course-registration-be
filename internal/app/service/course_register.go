@@ -1,9 +1,9 @@
 package service
 
 import (
+	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
-	"course-reg/internal/app/worker"
 	"course-reg/internal/pkg/constant"
 	"log"
 )

@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"course-reg/internal/app/dto"
+	"course-reg/internal/app/domain/dto"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/service"
 	"log"

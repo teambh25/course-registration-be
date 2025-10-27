@@ -47,7 +47,7 @@ func (r *CourseRepository) FetchAllCourses() ([]models.Course, error) {
 	var courses []models.Course
 	result := r.db.Find(&courses)
 	if result.Error != nil {
-		return nil, fmt.Errorf("select failed: %w", result.Error)
+		return nil, fmt.Errorf("find failed: %w", result.Error)
 	}
 	return courses, nil
 }

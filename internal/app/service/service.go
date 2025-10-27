@@ -16,6 +16,10 @@ type AdminServiceInterface interface {
 	GetRegistrationPeriod() (startTime, endTime string, err error)
 }
 
+type AuthServiceInterface interface {
+	Check(username string, password string) (constant.UserRole, error)
+}
+
 type CourseRegServiceInterface interface {
 	GetAllCourses() ([]models.Course, error)
 	Enroll(studentID, courseID uint) (success bool, message string, allSeats map[uint]constant.CourseStatus, waitlistPos int)

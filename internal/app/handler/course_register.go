@@ -17,17 +17,6 @@ func NewCourseRegHandler(s service.CourseRegServiceInterface) *CourseRegHandler 
 	return &CourseRegHandler{courseRegService: s}
 }
 
-func (h *CourseRegHandler) GetAllCourses(c *gin.Context) {
-	courses, err := h.courseRegService.GetAllCourses()
-	if err != nil {
-		log.Println("get courses failed:", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": "전체 강의 가져오기 실패"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"courses": courses})
-}
-
 func (h *CourseRegHandler) EnrollCourse(c *gin.Context) {
 	// TODO: Get studentID from session
 	studentID := uint(1)
@@ -49,22 +38,22 @@ func (h *CourseRegHandler) EnrollCourse(c *gin.Context) {
 	})
 }
 
-func (h *CourseRegHandler) CancelEnrollment(c *gin.Context) {
-	// todo : Get studentID from session
-	studentID := uint(1)
+// func (h *CourseRegHandler) CancelEnrollment(c *gin.Context) {
+// 	// todo: Get studentID from session
+// 	studentID := uint(1)
 
-	courseID, err := strconv.Atoi(c.Param("course_id"))
-	if err != nil {
-		log.Println("cancel enrollment failed:", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 강의 ID"})
-		return
-	}
+// 	courseID, err := strconv.Atoi(c.Param("course_id"))
+// 	if err != nil {
+// 		log.Println("cancel enrollment failed:", err.Error())
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 강의 ID"})
+// 		return
+// 	}
 
-	success, message, allSeats := h.courseRegService.CancelEnrollment(studentID, uint(courseID))
+// 	success, message, allSeats := h.courseRegService.CancelEnrollment(studentID, uint(courseID))
 
-	c.JSON(http.StatusOK, gin.H{
-		"success":         success,
-		"message":         message,
-		"remaining_seats": allSeats,
-	})
-}
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"success":         success,
+// 		"message":         message,
+// 		"remaining_seats": allSeats,
+// 	})
+// }

@@ -1,9 +1,10 @@
 package service
 
 import (
+	"course-reg/internal/app/domain/static"
+	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
-	"course-reg/internal/app/worker"
 	"course-reg/internal/pkg/setting"
 	"log"
 )
@@ -57,6 +58,7 @@ func (s *AdminService) CreateCourse(course *models.Course) (uint, error) {
 		return 0, err
 	}
 
+	static.ExportCoursesToJson(s.courseRepo)
 	s.enrollmentWorker.AddCourse(*course)
 
 	return course.ID, nil
@@ -69,6 +71,7 @@ func (s *AdminService) DeleteCourse(courseID uint) error {
 		return err
 	}
 
+	static.ExportCoursesToJson(s.courseRepo)
 	s.enrollmentWorker.RemoveCourse(courseID)
 
 	return nil
@@ -83,7 +86,9 @@ func (s *AdminService) RegisterCourses(courses []models.Course) error {
 		return err
 	}
 
+	static.ExportCoursesToJson(s.courseRepo)
 	s.enrollmentWorker.LoadInitCourses(courses)
+
 	return nil
 }
 
@@ -96,7 +101,9 @@ func (s *AdminService) ResetCourses() error {
 		return err
 	}
 
+	static.ExportCoursesToJson(s.courseRepo)
 	s.enrollmentWorker.ClearAllCourses()
+
 	return nil
 }
 
