@@ -29,11 +29,6 @@ func main() {
 	studentRepo := repository.NewStudentRepository(db)
 	courseRepo := repository.NewCourseRepository(db)
 	enrollRepo := repository.NewEnrollmentRepository(db)
-
-	// todo : log 파일을 통한 배치 쓰기로 변겨할 예정
-	// dbWorker := worker.NewDBWorker(enrollRepo)
-	// dbWorker.Start()
-
 	enrollmentWorker := worker.NewEnrollmentWorker(1000)
 
 	courses, err := courseRepo.FetchAllCourses()

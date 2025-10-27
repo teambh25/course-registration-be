@@ -17,6 +17,11 @@ func Setup() *gorm.DB {
 		panic(err)
 	}
 
+	if err := db.Exec("PRAGMA journal_mode=WAL;").Error; err != nil {
+		log.Fatal("failed to enable WAL mode:", err)
+		panic(err)
+	}
+
 	if err := db.AutoMigrate(&models.Student{}, &models.Course{}, &models.Enrollment{}); err != nil {
 		log.Fatal("failed to migrate database:", err)
 		panic(err)
