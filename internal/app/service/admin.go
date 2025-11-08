@@ -1,19 +1,22 @@
 package service
 
 import (
+	"course-reg/internal/app/domain/cache"
 	"course-reg/internal/app/domain/static"
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
 	"course-reg/internal/pkg/setting"
+	"course-reg/internal/pkg/utils"
 	"log"
 )
 
 type AdminService struct {
-	studentRepo      repository.StudentRepositoryInterface
-	courseRepo       repository.CourseRepositoryInterface
-	enrollRepo       repository.EnrollmentRepositoryInterface
-	enrollmentWorker *worker.EnrollmentWorker
+	studentRepo  repository.StudentRepositoryInterface
+	courseRepo   repository.CourseRepositoryInterface
+	enrollRepo   repository.EnrollmentRepositoryInterface
+	enrollWorker *worker.EnrollmentWorker
+	regState     *cache.RegistrationState
 }
 
 func NewAdminService(
@@ -21,105 +24,88 @@ func NewAdminService(
 	c repository.CourseRepositoryInterface,
 	e repository.EnrollmentRepositoryInterface,
 	w *worker.EnrollmentWorker,
+	rc *cache.RegistrationState,
 ) *AdminService {
 	return &AdminService{
-		studentRepo:      s,
-		courseRepo:       c,
-		enrollRepo:       e,
-		enrollmentWorker: w,
+		studentRepo:  s,
+		courseRepo:   c,
+		enrollRepo:   e,
+		enrollWorker: w,
+		regState:     rc,
 	}
 }
 
-func (s *AdminService) RegisterStudents(students []models.Student) error {
-	err := s.studentRepo.BulkInsertStudents(students)
-	if err != nil {
-		log.Println("register students failed:", err.Error())
-		return err
-	}
-	s.enrollmentWorker.LoadInitStudents(students)
-	return nil
+func (s *AdminService) GetRegistrationState() bool {
+	return s.regState.IsEnabled()
 }
 
-func (s *AdminService) ResetStudents() error {
-	err := s.studentRepo.DeleteAllStudents()
+func (s *AdminService) StartRegistration() error {
+	err := s.regState.SetEnabledAndAct(true, func() error {
+
+		students, err := s.studentRepo.FetchAllStudents()
+		if err != nil {
+			log.Println("failed to load students:", err.Error())
+			return err
+		}
+
+		courses, err := s.courseRepo.FetchAllCourses()
+		if err != nil {
+			log.Println("failed to load courses:", err.Error())
+			return err
+		}
+
+		// TODO: Load previous enrollment data
+		// enrollments, err := repos.Enrollment.LoadAllEnrollments()
+		// if err != nil {
+		// 	log.Printf("[warning] failed to load enrollments: %v", err)
+		// 	enrollments = []models.Enrollment{}
+		// }
+
+		s.enrollWorker.Start(students, courses)
+		return nil
+	})
 	if err != nil {
-		log.Println("reset students failed:", err.Error())
-		return err
-	}
-	s.enrollmentWorker.ClearAllStudents()
-	return nil
-
-}
-
-func (s *AdminService) CreateCourse(course *models.Course) (uint, error) {
-	err := s.courseRepo.CreateCourse(course)
-	if err != nil {
-		log.Println("create course failed:", err.Error())
-		return 0, err
-	}
-
-	static.ExportCoursesToJson(s.courseRepo)
-	s.enrollmentWorker.AddCourse(*course)
-
-	return course.ID, nil
-}
-
-func (s *AdminService) DeleteCourse(courseID uint) error {
-	err := s.courseRepo.DeleteCourse(courseID)
-	if err != nil {
-		log.Println("delete course failed:", err.Error())
+		log.Println("cache load failed:", err.Error())
 		return err
 	}
 
-	static.ExportCoursesToJson(s.courseRepo)
-	s.enrollmentWorker.RemoveCourse(courseID)
+	if err := setting.SaveRegistrationState("true"); err != nil {
+		log.Println("save registration state failed:", err.Error()) // 500
+		return err
+	}
 
 	return nil
 }
 
-func (s *AdminService) RegisterCourses(courses []models.Course) error {
-	// todo: course가 없을 때 처음 한번만 실행 가능하도록
-
-	err := s.courseRepo.BulkInsertCourses(courses)
-	if err != nil {
-		log.Println("register courses failed:", err.Error())
-		return err
-	}
-
-	static.ExportCoursesToJson(s.courseRepo)
-	s.enrollmentWorker.LoadInitCourses(courses)
+func (s *AdminService) PauseRegistration() error {
+	// if !s.regState.IsEnabled() {
+	// 	log.Println("already disabled!!")
+	// 	return nil
+	// }
 
 	return nil
 }
 
-func (s *AdminService) ResetCourses() error {
-	// todo: 수강 신청 시작하면 reset 불가능
-
-	err := s.courseRepo.DeleteAllCourses()
-	if err != nil {
-		log.Println("reset courses failed:", err.Error())
-		return err
-	}
-
-	static.ExportCoursesToJson(s.courseRepo)
-	s.enrollmentWorker.ClearAllCourses()
-
-	return nil
+func (s *AdminService) GetRegistrationPeriod() (string, string) {
+	return s.regState.GetPeriod()
 }
 
 func (s *AdminService) SetRegistrationPeriod(startTime, endTime string) error {
 	// Validate time format
-	_, err := setting.ParsePeriodTime(startTime)
+	_, err := utils.StringToTime(startTime)
 	if err != nil {
 		log.Println("invalid start time format:", err.Error())
 		return err
 	}
 
-	_, err = setting.ParsePeriodTime(endTime)
+	_, err = utils.StringToTime(endTime)
 	if err != nil {
 		log.Println("invalid end time format:", err.Error())
 		return err
 	}
+
+	// Update in-memory state
+	s.regState.SetPeriod(startTime, endTime)
 
 	// Save to config file
 	err = setting.SaveRegistrationPeriod(startTime, endTime)
@@ -131,11 +117,80 @@ func (s *AdminService) SetRegistrationPeriod(startTime, endTime string) error {
 	return nil
 }
 
-func (s *AdminService) GetRegistrationPeriod() (string, string, error) {
-	startTime := setting.RegistrationPeriodSetting.StartTime
-	endTime := setting.RegistrationPeriodSetting.EndTime
+func (s *AdminService) RegisterStudents(students []models.Student) error {
+	err := s.regState.RunIfEnabled(false, func() error {
+		return s.studentRepo.BulkInsertStudents(students)
+	})
+	if err != nil {
+		log.Println("register students failed:", err.Error())
+		return err
+	}
+	return nil
+}
 
-	return startTime, endTime, nil
+func (s *AdminService) ResetStudents() error {
+	err := s.regState.RunIfEnabled(false, func() error {
+		return s.studentRepo.DeleteAllStudents()
+	})
+	if err != nil {
+		log.Println("reset students failed:", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (s *AdminService) CreateCourse(course *models.Course) (uint, error) {
+	err := s.regState.RunIfEnabled(false, func() error {
+		return s.courseRepo.CreateCourse(course)
+	})
+	if err != nil {
+		log.Println("create course failed:", err.Error())
+		return 0, err
+	}
+
+	static.ExportCoursesToJson(s.courseRepo)
+	return course.ID, nil
+}
+
+func (s *AdminService) DeleteCourse(courseID uint) error {
+	err := s.regState.RunIfEnabled(false, func() error {
+		return s.courseRepo.DeleteCourse(courseID)
+	})
+	if err != nil {
+		log.Println("delete course failed:", err.Error())
+		return err
+	}
+
+	static.ExportCoursesToJson(s.courseRepo)
+	return nil
+}
+
+func (s *AdminService) RegisterCourses(courses []models.Course) error {
+	// todo: course가 없을 때만 실행 가능하도록?
+	err := s.regState.RunIfEnabled(false, func() error {
+		return s.courseRepo.BulkInsertCourses(courses)
+	})
+	if err != nil {
+		log.Println("register courses failed:", err.Error())
+		return err
+	}
+
+	static.ExportCoursesToJson(s.courseRepo)
+	return nil
+}
+
+func (s *AdminService) ResetCourses() error {
+	err := s.regState.RunIfEnabled(false, func() error {
+		return s.courseRepo.DeleteAllCourses()
+	})
+	if err != nil {
+		log.Println("reset courses failed:", err.Error())
+		return err
+	}
+
+	static.ExportCoursesToJson(s.courseRepo)
+	return nil
 }
 
 // func (s *AdminService) GetEnrolledStudentsByCourse(courseID uint) ([]Student, error)

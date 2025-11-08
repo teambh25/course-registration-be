@@ -19,6 +19,48 @@ func NewAdminHandler(s service.AdminServiceInterface) *AdminHandler {
 	return &AdminHandler{adminService: s}
 }
 
+func (h *AdminHandler) StartRegistration(c *gin.Context) {
+	if err := h.adminService.StartRegistration(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "서버 오류"})
+		return
+	}
+	c.Status(http.StatusOK)
+}
+
+func (h *AdminHandler) PauseRegistration(c *gin.Context) {
+	c.Status(http.StatusOK)
+}
+
+func (h *AdminHandler) GetRegistrationState(c *gin.Context) {
+	enabled := h.adminService.GetRegistrationState()
+	c.JSON(http.StatusOK, gin.H{"enabled": enabled})
+}
+
+func (h *AdminHandler) SetRegistrationPeriod(c *gin.Context) {
+	var req dto.SetRegistrationPeriodRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Println("set registration schedule failed:", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 수강 신청 기간"})
+		return
+	}
+
+	if err := h.adminService.SetRegistrationPeriod(req.StartTime, req.EndTime); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": ""})
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
+func (h *AdminHandler) GetRegistrationPeriod(c *gin.Context) {
+	startTime, endTime := h.adminService.GetRegistrationPeriod()
+	c.JSON(http.StatusOK, gin.H{
+		"start_time": startTime,
+		"end_time":   endTime,
+	})
+}
+
 func (h *AdminHandler) RegisterStudents(c *gin.Context) {
 	var students []models.Student
 
@@ -103,34 +145,4 @@ func (h *AdminHandler) ResetCourses(c *gin.Context) {
 	}
 
 	c.Status(http.StatusOK)
-}
-
-func (h *AdminHandler) SetRegistrationPeriod(c *gin.Context) {
-	var req dto.SetRegistrationPeriodRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Println("set registration period failed:", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 요청 형식"})
-		return
-	}
-
-	if err := h.adminService.SetRegistrationPeriod(req.StartTime, req.EndTime); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": ""})
-		return
-	}
-
-	c.Status(http.StatusOK)
-}
-
-func (h *AdminHandler) GetRegistrationPeriod(c *gin.Context) {
-	startTime, endTime, err := h.adminService.GetRegistrationPeriod()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "수강 신청 기간 조회 실패"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"start_time": startTime,
-		"end_time":   endTime,
-	})
 }

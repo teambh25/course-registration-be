@@ -3,7 +3,7 @@ package repository
 import "course-reg/internal/app/models"
 
 type StudentRepositoryInterface interface {
-	GetPassword(username string) (string, error)
+	FetchPassword(username string) (uint, string, error)
 	BulkInsertStudents(students []models.Student) error
 	DeleteAllStudents() error
 	FetchAllStudents() ([]models.Student, error)

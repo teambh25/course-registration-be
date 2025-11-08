@@ -4,9 +4,15 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
+var jsonWriteMu sync.Mutex
+
 func SaveJSON(filePath string, data interface{}) error {
+	jsonWriteMu.Lock()
+	defer jsonWriteMu.Unlock()
+
 	dir := filepath.Dir(filePath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
@@ -17,5 +23,10 @@ func SaveJSON(filePath string, data interface{}) error {
 		return err
 	}
 
-	return os.WriteFile(filePath, jsonData, 0644)
+	tempFile := filePath + ".tmp"
+	if err := os.WriteFile(tempFile, jsonData, 0644); err != nil {
+		return err
+	}
+
+	return os.Rename(tempFile, filePath) // atomic only linux!!
 }

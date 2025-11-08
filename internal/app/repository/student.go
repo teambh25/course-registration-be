@@ -15,13 +15,14 @@ func NewStudentRepository(db *gorm.DB) *StudentRepository {
 	return &StudentRepository{db: db}
 }
 
-func (r *StudentRepository) GetPassword(username string) (string, error) {
+func (r *StudentRepository) FetchPassword(username string) (uint, string, error) {
 	var student *models.Student
 
 	result := r.db.Where("phone_number = ?", username).Take(&student)
-
-	// 중복으로 인한 실패인지 랩핑 필요
-	return student.BirthDate, result.Error
+	if result.Error != nil {
+		return 0, "", fmt.Errorf("fetch failed: %w", result.Error)
+	}
+	return student.ID, student.BirthDate, nil
 }
 
 func (r *StudentRepository) BulkInsertStudents(students []models.Student) error {
@@ -48,7 +49,7 @@ func (r *StudentRepository) FetchAllStudents() ([]models.Student, error) {
 	var students []models.Student
 	result := r.db.Find(&students)
 	if result.Error != nil {
-		return nil, fmt.Errorf("select failed: %w", result.Error)
+		return nil, fmt.Errorf("find failed: %w", result.Error)
 	}
 	return students, nil
 }

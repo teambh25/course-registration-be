@@ -6,22 +6,25 @@ import (
 )
 
 type AdminServiceInterface interface {
-	RegisterStudents(students []models.Student) error
+	RegisterStudents([]models.Student) error
 	ResetStudents() error
-	RegisterCourses(courses []models.Course) error
+	RegisterCourses([]models.Course) error
 	ResetCourses() error
-	CreateCourse(course *models.Course) (uint, error)
-	DeleteCourse(courseID uint) error
-	SetRegistrationPeriod(startTime, endTime string) error
-	GetRegistrationPeriod() (startTime, endTime string, err error)
+	CreateCourse(*models.Course) (uint, error)
+	DeleteCourse(uint) error
+
+	GetRegistrationState() bool
+	StartRegistration() error
+	PauseRegistration() error
+	GetRegistrationPeriod() (string, string)
+	SetRegistrationPeriod(string, string) error
 }
 
 type AuthServiceInterface interface {
-	Check(username string, password string) (constant.UserRole, error)
+	Check(username string, password string) (constant.UserRole, uint, error)
 }
 
 type CourseRegServiceInterface interface {
-	GetAllCourses() ([]models.Course, error)
 	Enroll(studentID, courseID uint) (success bool, message string, allSeats map[uint]constant.CourseStatus, waitlistPos int)
 	// CancelEnrollment(studentID, courseID uint) (success bool, message string, allSeats map[uint]int)
 }

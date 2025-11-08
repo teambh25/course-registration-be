@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"course-reg/internal/app/domain/cache"
 	"course-reg/internal/app/domain/static"
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/handler"
@@ -16,13 +17,13 @@ import (
 	"course-reg/internal/app/service"
 	"course-reg/internal/pkg/database"
 	"course-reg/internal/pkg/setting"
-	"course-reg/internal/pkg/util"
+	"course-reg/internal/pkg/utils"
 )
 
 func init() {
 	setting.Setup()
 	// logging.Setup() // logging 할 수 있는 환경일 떄 다시 사용
-	util.Setup()
+	utils.Setup()
 }
 
 type Repositories struct {
@@ -48,9 +49,10 @@ func main() {
 	repos := setupRepositories(db)
 	setupStatic(repos)
 	enrollmentWorker := setupWorker(repos)
-	services := setupServices(repos, enrollmentWorker)
+	registrationStatus := setupRegistrationState()
+	services := setupServices(repos, enrollmentWorker, registrationStatus)
 	handlers := setupHandlers(services)
-	router := setupRouter(handlers)
+	router := setupRouter(handlers, registrationStatus)
 
 	startServer(router)
 }
@@ -72,33 +74,27 @@ func setupStatic(repos *Repositories) {
 
 func setupWorker(repos *Repositories) *worker.EnrollmentWorker {
 	w := worker.NewEnrollmentWorker(1000)
-
-	courses, err := repos.Course.FetchAllCourses()
-	if err != nil {
-		log.Fatalf("failed to load courses: %v", err)
-	}
-
-	students, err := repos.Student.FetchAllStudents()
-	if err != nil {
-		log.Fatalf("failed to load students: %v", err)
-	}
-
-	// TODO: Load previous enrollment data
-	// enrollments, err := repos.Enrollment.LoadAllEnrollments()
-	// if err != nil {
-	// 	log.Printf("[warning] failed to load enrollments: %v", err)
-	// 	enrollments = []models.Enrollment{}
-	// }
-
-	w.Start(students, courses)
-
 	return w
+
+	// w.Start(students, courses)
 }
 
-func setupServices(repos *Repositories, w *worker.EnrollmentWorker) *Services {
+func setupRegistrationState() *cache.RegistrationState {
+	enabled, startTime, endTime := setting.LoadRegistrationConfig()
+
+	if enabled {
+		// todo
+	}
+
+	// add registration schedule goroutine
+
+	return cache.NewRegistrationState(enabled, startTime, endTime)
+}
+
+func setupServices(repos *Repositories, w *worker.EnrollmentWorker, rc *cache.RegistrationState) *Services {
 	return &Services{
 		Auth:      service.NewAuthService(repos.Student),
-		Admin:     service.NewAdminService(repos.Student, repos.Course, repos.Enrollment, w),
+		Admin:     service.NewAdminService(repos.Student, repos.Course, repos.Enrollment, w, rc),
 		CourseReg: service.NewCourseRegService(repos.Course, repos.Enrollment, w),
 	}
 }
@@ -111,9 +107,8 @@ func setupHandlers(services *Services) *Handlers {
 	}
 }
 
-func setupRouter(handlers *Handlers) *gin.Engine {
-	timeProvider := util.NewKoreaTimeProvider()
-	return routers.InitRouter(handlers.Admin, handlers.Auth, handlers.CourseReg, timeProvider)
+func setupRouter(handlers *Handlers, regState *cache.RegistrationState) *gin.Engine {
+	return routers.InitRouter(handlers.Admin, handlers.Auth, handlers.CourseReg, regState)
 }
 
 func startServer(router *gin.Engine) {
