@@ -35,7 +35,7 @@ func (r *CourseRepository) DeleteAllCourses() error {
 	return nil
 }
 
-func (r *CourseRepository) CreateCourse(course *models.Course) error {
+func (r *CourseRepository) InsertCourse(course *models.Course) error {
 	result := r.db.Create(course)
 	if result.Error != nil {
 		return fmt.Errorf("create failed: %w", result.Error)

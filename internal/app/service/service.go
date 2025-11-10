@@ -25,6 +25,6 @@ type AuthServiceInterface interface {
 }
 
 type CourseRegServiceInterface interface {
-	Enroll(studentID, courseID uint) (success bool, message string, allSeats map[uint]constant.CourseStatus, waitlistPos int)
+	Enroll(studentID, courseID uint) (bool, string)
 	// CancelEnrollment(studentID, courseID uint) (success bool, message string, allSeats map[uint]int)
 }

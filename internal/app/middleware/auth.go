@@ -2,32 +2,39 @@ package middleware
 
 import (
 	"course-reg/internal/pkg/constant"
+	"course-reg/internal/pkg/session"
 	"net/http"
 
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
-func AuthAdmin() gin.HandlerFunc {
+func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		session := sessions.Default(c)
-		role := session.Get("role")
-		if x, ok := role.(int); !ok || constant.UserRole(x) != constant.RoleAdmin {
+		_, _, err := session.GetSession(c)
+		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		}
-		c.Next() // Request 이전
+		c.Next()
 	}
 }
 
-func Auth() gin.HandlerFunc {
+func AuthAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		session := sessions.Default(c)
-		role := session.Get("role")
-		if role == nil {
+		role, _, err := session.GetSession(c)
+		if err != nil || role != constant.RoleAdmin {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		}
-		// c.Set("role", role)
-		// c.MustGet("role")w
-		c.Next() // Request 이전
+		c.Next()
+	}
+}
+
+func AuthStudent() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, userID, err := session.GetSession(c)
+		if err != nil || role != constant.RoleStudent {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		}
+		c.Set("studentID", userID)
+		c.Next()
 	}
 }

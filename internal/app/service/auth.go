@@ -19,15 +19,16 @@ func NewAuthService(s repository.StudentRepositoryInterface) *AuthService {
 	return &AuthService{studentRepo: s}
 }
 
-func (a *AuthService) Check(username string, password string) (constant.UserRole, error) {
+func (a *AuthService) Check(username string, password string) (constant.UserRole, uint, error) {
 	var role constant.UserRole
-	var err error
 	var pw string
+	var userID uint
+	var err error
 
 	if is_admin := setting.SecretSetting.AdminID == username && setting.SecretSetting.AdminPW == password; is_admin {
 		role = constant.RoleAdmin
-	} else if pw, err = a.studentRepo.GetPassword(username); err == nil && pw == password {
+	} else if userID, pw, err = a.studentRepo.FetchPassword(username); err == nil && pw == password {
 		role = constant.RoleStudent
 	}
-	return role, err
+	return role, userID, err
 }

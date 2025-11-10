@@ -40,7 +40,7 @@ func (s *AdminService) GetRegistrationState() bool {
 }
 
 func (s *AdminService) StartRegistration() error {
-	err := s.regState.SetEnabledAndAct(true, func() error {
+	err := s.regState.ChangeEnabledAndAct(true, func() error {
 
 		students, err := s.studentRepo.FetchAllStudents()
 		if err != nil {
@@ -54,14 +54,13 @@ func (s *AdminService) StartRegistration() error {
 			return err
 		}
 
-		// TODO: Load previous enrollment data
-		// enrollments, err := repos.Enrollment.LoadAllEnrollments()
-		// if err != nil {
-		// 	log.Printf("[warning] failed to load enrollments: %v", err)
-		// 	enrollments = []models.Enrollment{}
-		// }
+		enrollments, err := s.enrollRepo.FetchAllEnrollments()
+		if err != nil {
+			log.Printf("failed to load enrollments: %v", err)
+			return err
+		}
 
-		s.enrollWorker.Start(students, courses)
+		s.enrollWorker.Start(students, courses, enrollments)
 		return nil
 	})
 	if err != nil {
@@ -78,10 +77,19 @@ func (s *AdminService) StartRegistration() error {
 }
 
 func (s *AdminService) PauseRegistration() error {
-	// if !s.regState.IsEnabled() {
-	// 	log.Println("already disabled!!")
-	// 	return nil
-	// }
+	err := s.regState.ChangeEnabledAndAct(false, func() error {
+		// TODO:
+		return nil
+	})
+	if err != nil {
+		log.Println("cache load failed:", err.Error())
+		return err
+	}
+
+	if err := setting.SaveRegistrationState("false"); err != nil {
+		log.Println("save registration state failed:", err.Error()) // 500
+		return err
+	}
 
 	return nil
 }
@@ -142,7 +150,7 @@ func (s *AdminService) ResetStudents() error {
 
 func (s *AdminService) CreateCourse(course *models.Course) (uint, error) {
 	err := s.regState.RunIfEnabled(false, func() error {
-		return s.courseRepo.CreateCourse(course)
+		return s.courseRepo.InsertCourse(course)
 	})
 	if err != nil {
 		log.Println("create course failed:", err.Error())

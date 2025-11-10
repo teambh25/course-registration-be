@@ -30,13 +30,13 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	role, err := h.authService.Check(u.Username, u.Password)
+	role, userID, err := h.authService.Check(u.Username, u.Password)
 	if err != nil || role == 0 {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "잘못된 ID/PW"})
 		return
 	}
 
-	err = session.SetSession(c, role)
+	err = session.SetSession(c, role, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -54,7 +54,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 }
 
 func (h *AuthHandler) Check(c *gin.Context) {
-	role, err := session.GetSession(c)
+	role, _, err := session.GetSession(c)
 	if err != nil {
 		log.Println("auth check failed:", err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "세션 만료"})

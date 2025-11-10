@@ -12,13 +12,13 @@ type StudentRepositoryInterface interface {
 type CourseRepositoryInterface interface {
 	BulkInsertCourses(courses []models.Course) error
 	DeleteAllCourses() error
-	CreateCourse(course *models.Course) error
+	InsertCourse(course *models.Course) error
 	DeleteCourse(courseID uint) error
 	FetchAllCourses() ([]models.Course, error)
 }
 
 type EnrollmentRepositoryInterface interface {
-	SaveEnrollment(enrollment *models.Enrollment) error
+	InsertEnrollment(enrollment *models.Enrollment) error
 	DeleteEnrollment(studentID uint, courseID uint) error
-	LoadAllEnrollments() ([]models.Enrollment, error)
+	FetchAllEnrollments() ([]models.Enrollment, error)
 }

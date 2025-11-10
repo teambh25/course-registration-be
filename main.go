@@ -95,7 +95,7 @@ func setupServices(repos *Repositories, w *worker.EnrollmentWorker, rc *cache.Re
 	return &Services{
 		Auth:      service.NewAuthService(repos.Student),
 		Admin:     service.NewAdminService(repos.Student, repos.Course, repos.Enrollment, w, rc),
-		CourseReg: service.NewCourseRegService(repos.Course, repos.Enrollment, w),
+		CourseReg: service.NewCourseRegService(repos.Course, repos.Enrollment, w, rc),
 	}
 }
 
