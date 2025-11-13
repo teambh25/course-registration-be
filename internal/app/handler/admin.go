@@ -28,6 +28,10 @@ func (h *AdminHandler) StartRegistration(c *gin.Context) {
 }
 
 func (h *AdminHandler) PauseRegistration(c *gin.Context) {
+	if err := h.adminService.PauseRegistration(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "서버 오류"})
+		return
+	}
 	c.Status(http.StatusOK)
 }
 

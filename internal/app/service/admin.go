@@ -2,7 +2,7 @@ package service
 
 import (
 	"course-reg/internal/app/domain/cache"
-	"course-reg/internal/app/domain/static"
+	"course-reg/internal/app/domain/export"
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
@@ -60,38 +60,32 @@ func (s *AdminService) StartRegistration() error {
 			return err
 		}
 
-		s.enrollWorker.Start(students, courses, enrollments)
+		if err := s.enrollWorker.Start(students, courses, enrollments); err != nil {
+			log.Printf("failed to start worker: %v", err)
+			return err
+		}
+
+		if err := setting.SaveRegistrationState("true"); err != nil {
+			log.Println("save registration state failed:", err.Error())
+			return err
+		}
 		return nil
 	})
-	if err != nil {
-		log.Println("cache load failed:", err.Error())
-		return err
-	}
-
-	if err := setting.SaveRegistrationState("true"); err != nil {
-		log.Println("save registration state failed:", err.Error()) // 500
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (s *AdminService) PauseRegistration() error {
 	err := s.regState.ChangeEnabledAndAct(false, func() error {
-		// TODO:
+		s.enrollWorker.Stop()
+
+		if err := setting.SaveRegistrationState("false"); err != nil {
+			log.Println("save registration state failed:", err.Error()) // 500
+			return err
+		}
 		return nil
 	})
-	if err != nil {
-		log.Println("cache load failed:", err.Error())
-		return err
-	}
 
-	if err := setting.SaveRegistrationState("false"); err != nil {
-		log.Println("save registration state failed:", err.Error()) // 500
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (s *AdminService) GetRegistrationPeriod() (string, string) {
@@ -157,7 +151,7 @@ func (s *AdminService) CreateCourse(course *models.Course) (uint, error) {
 		return 0, err
 	}
 
-	static.ExportCoursesToJson(s.courseRepo)
+	export.ExportCoursesToJson(s.courseRepo)
 	return course.ID, nil
 }
 
@@ -170,7 +164,7 @@ func (s *AdminService) DeleteCourse(courseID uint) error {
 		return err
 	}
 
-	static.ExportCoursesToJson(s.courseRepo)
+	export.ExportCoursesToJson(s.courseRepo)
 	return nil
 }
 
@@ -184,7 +178,7 @@ func (s *AdminService) RegisterCourses(courses []models.Course) error {
 		return err
 	}
 
-	static.ExportCoursesToJson(s.courseRepo)
+	export.ExportCoursesToJson(s.courseRepo)
 	return nil
 }
 
@@ -197,7 +191,7 @@ func (s *AdminService) ResetCourses() error {
 		return err
 	}
 
-	static.ExportCoursesToJson(s.courseRepo)
+	export.ExportCoursesToJson(s.courseRepo)
 	return nil
 }
 
