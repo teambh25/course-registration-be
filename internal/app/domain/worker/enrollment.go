@@ -4,10 +4,14 @@ import (
 	"course-reg/internal/app/domain/cache"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
+	"errors"
+	"sync"
 )
 
 // EnrollmentWorker handles enrollment operations with cache
 type EnrollmentWorker struct {
+	wg          sync.WaitGroup
+	queueSize   int
 	requestChan chan EnrollmentRequest
 	cache       *cache.EnrollmentCache
 	enrollRepo  repository.EnrollmentRepositoryInterface
@@ -37,19 +41,33 @@ type EnrollmentResponse struct {
 	Message string
 }
 
-func NewEnrollmentWorker(queueSize int) *EnrollmentWorker {
+func NewEnrollmentWorker(queueSize int, enrollRepo repository.EnrollmentRepositoryInterface) *EnrollmentWorker {
 	return &EnrollmentWorker{
-		requestChan: make(chan EnrollmentRequest, queueSize),
-		cache:       cache.NewEnrollmentCache(),
+		queueSize:  queueSize,
+		enrollRepo: enrollRepo,
 	}
 }
 
-func (w *EnrollmentWorker) Start(students []models.Student, courses []models.Course, enrollments []models.Enrollment) {
-	w.cache.LoadInitStudents(students)
-	w.cache.LoadInitCourses(courses)
-	w.cache.LoadEnrollments(enrollments)
-	w.cache.BuildConflictGraph(courses)
-	go w.worker()
+func (w *EnrollmentWorker) Start(students []models.Student, courses []models.Course, enrollments []models.Enrollment) error {
+	if w.requestChan != nil {
+		return errors.New("worker already running")
+	}
+
+	w.requestChan = make(chan EnrollmentRequest, w.queueSize)
+	w.cache = cache.NewEnrollmentCacheWithData(students, courses, enrollments)
+
+	w.wg.Add(1)
+	go func() {
+		defer w.wg.Done()
+		w.worker()
+	}()
+
+	return nil
+}
+
+func (w *EnrollmentWorker) Stop() {
+	close(w.requestChan)
+	w.wg.Wait()
 }
 
 func (w *EnrollmentWorker) worker() {

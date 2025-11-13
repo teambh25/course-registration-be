@@ -4,15 +4,9 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"sync"
 )
 
-var jsonWriteMu sync.Mutex
-
 func SaveJSON(filePath string, data interface{}) error {
-	jsonWriteMu.Lock()
-	defer jsonWriteMu.Unlock()
-
 	dir := filepath.Dir(filePath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err

@@ -35,14 +35,23 @@ func NewEnrollmentCache() *EnrollmentCache {
 	}
 }
 
-func (cache *EnrollmentCache) LoadInitStudents(students []models.Student) {
+func NewEnrollmentCacheWithData(students []models.Student, courses []models.Course, enrollments []models.Enrollment) *EnrollmentCache {
+	cache := NewEnrollmentCache()
+	cache.loadInitStudents(students)
+	cache.loadInitCourses(courses)
+	cache.loadEnrollments(enrollments)
+	cache.buildConflictGraph(courses)
+	return cache
+}
+
+func (cache *EnrollmentCache) loadInitStudents(students []models.Student) {
 	for _, s := range students {
 		cache.StudentCourses[s.ID] = make(map[uint]struct{})
 		cache.StudentWaitingCourses[s.ID] = make(map[uint]struct{})
 	}
 }
 
-func (cache *EnrollmentCache) LoadInitCourses(courses []models.Course) {
+func (cache *EnrollmentCache) loadInitCourses(courses []models.Course) {
 	for _, c := range courses {
 		cache.CourseCapacity[c.ID] = c.Capacity
 		cache.EnrolledSeq[c.ID] = &atomic.Int32{}
@@ -50,9 +59,9 @@ func (cache *EnrollmentCache) LoadInitCourses(courses []models.Course) {
 	}
 }
 
-// LoadEnrollments loads existing enrollments into cache
+// loadEnrollments loads existing enrollments into cache
 // Must be called after LoadInitStudents and LoadInitCourses
-func (cache *EnrollmentCache) LoadEnrollments(enrollments []models.Enrollment) {
+func (cache *EnrollmentCache) loadEnrollments(enrollments []models.Enrollment) {
 	for _, e := range enrollments {
 		if e.IsWaitlist {
 			// Update to max(current, position + 1)
@@ -72,7 +81,7 @@ func (cache *EnrollmentCache) LoadEnrollments(enrollments []models.Enrollment) {
 	}
 }
 
-func (cache *EnrollmentCache) BuildConflictGraph(courses []models.Course) {
+func (cache *EnrollmentCache) buildConflictGraph(courses []models.Course) {
 	cache.ConflictGraph = make(map[uint]map[uint]bool)
 	for i, course1 := range courses {
 		cache.ConflictGraph[course1.ID] = make(map[uint]bool)

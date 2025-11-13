@@ -5,7 +5,6 @@ import (
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
 
-	"course-reg/internal/app/domain/cache"
 	"course-reg/internal/app/handler"
 	"course-reg/internal/app/middleware"
 	"course-reg/internal/pkg/constant"
@@ -17,7 +16,6 @@ func InitRouter(
 	adminHandler *handler.AdminHandler,
 	authHandler *handler.AuthHandler,
 	courseRegHandler *handler.CourseRegHandler,
-	regState *cache.RegistrationState,
 ) *gin.Engine {
 	gin.SetMode(setting.ServerSetting.RunMode) // set gin mode (must be called before gin.New())
 	r := gin.New()

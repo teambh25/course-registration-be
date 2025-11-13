@@ -35,11 +35,12 @@ func (rs *RegistrationState) ChangeEnabledAndAct(enabled bool, act func() error)
 	if rs.enabled == enabled {
 		return fmt.Errorf("enabled aleardy set %v", enabled)
 	}
-	rs.enabled = enabled
 
 	if err := act(); err != nil {
 		return err
 	}
+
+	rs.enabled = enabled
 	return nil
 }
 

@@ -1,13 +1,19 @@
-package static
+package export
 
 import (
 	"course-reg/internal/app/repository"
 	"course-reg/internal/pkg/constant"
 	"course-reg/internal/pkg/file"
 	"log"
+	"sync"
 )
 
+var exportMu sync.Mutex
+
 func ExportCoursesToJson(courseRepo repository.CourseRepositoryInterface) error {
+	exportMu.Lock()
+	defer exportMu.Unlock()
+
 	courses, err := courseRepo.FetchAllCourses()
 	if err != nil {
 		log.Println("fetch all courses failed:", err.Error())

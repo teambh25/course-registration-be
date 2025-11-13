@@ -2,7 +2,6 @@ package setting
 
 import (
 	"log"
-	"sync"
 	"time"
 
 	"github.com/go-ini/ini"
@@ -72,12 +71,8 @@ func LoadRegistrationConfig() (enabled bool, startTime, endTime string) {
 	return regStatus.Enabled, regStatus.StartTime, regStatus.EndTime
 }
 
-var confWriteMu sync.Mutex
-
 // SaveRegistrationState saves registration enabled state to ini file
 func SaveRegistrationState(enabled string) error {
-	confWriteMu.Lock()
-	defer confWriteMu.Unlock()
 
 	cfg.Section("registration").Key("Enabled").SetValue(enabled)
 	err := cfg.SaveTo("conf/app.ini")
@@ -89,8 +84,6 @@ func SaveRegistrationState(enabled string) error {
 
 // SaveRegistrationPeriod saves registration period to ini file
 func SaveRegistrationPeriod(startTime, endTime string) error {
-	confWriteMu.Lock()
-	defer confWriteMu.Unlock()
 
 	cfg.Section("registration").Key("StartTime").SetValue(startTime)
 	cfg.Section("registration").Key("EndTime").SetValue(endTime)
