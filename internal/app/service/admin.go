@@ -69,8 +69,16 @@ func (s *AdminService) StartRegistration() error {
 			log.Println("save registration state failed:", err.Error())
 			return err
 		}
+
 		return nil
 	})
+
+	if err != nil {
+		log.Println(err)
+	} else {
+		log.Println("Start Registration!!!")
+	}
+
 	return err
 }
 
@@ -84,7 +92,11 @@ func (s *AdminService) PauseRegistration() error {
 		}
 		return nil
 	})
-
+	if err != nil {
+		log.Println(err)
+	} else {
+		log.Println("Pause Registration!!!")
+	}
 	return err
 }
 

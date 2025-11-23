@@ -68,6 +68,7 @@ func (w *EnrollmentWorker) Start(students []models.Student, courses []models.Cou
 func (w *EnrollmentWorker) Stop() {
 	close(w.requestChan)
 	w.wg.Wait()
+	w.requestChan = nil
 }
 
 func (w *EnrollmentWorker) worker() {
