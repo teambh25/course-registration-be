@@ -65,7 +65,7 @@ func InitRouter(
 		}
 
 		user := v1.Group("/courses")
-		// user.Use(middleware.Auth())
+		user.Use(middleware.AuthUser())
 		{
 			user.StaticFile("/", constant.StaticCoursesFilePath)
 			// user.GET("/enrollments", courseRegHandler.GetCoursesCapacityStatus)
