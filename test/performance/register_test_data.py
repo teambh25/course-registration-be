@@ -3,23 +3,7 @@ import json
 import requests
 import argparse
 
-
-def admin_login(url: str, admin_id: str, admin_pw: str) -> requests.Session:
-    """Admin login and return authenticated session"""
-    session = requests.Session()
-
-    try:
-        response = session.post(
-            os.path.join(url, "api/v1/auth/login"),
-            json={"username": admin_id, "password": admin_pw},
-        )
-        response.raise_for_status()
-        print(f"Successfully login. Status code: {response.status_code}")
-        print("Response:", response.json())
-        return session
-    except requests.exceptions.RequestException as e:
-        print(f"Failed to login. Error: {e}")
-        raise
+from admin_utils import admin_login
 
 
 def register_studnet_data(url: str, session: requests.Session):
