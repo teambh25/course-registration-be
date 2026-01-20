@@ -18,6 +18,8 @@ type AdminServiceInterface interface {
 	PauseRegistration() error
 	GetRegistrationPeriod() (string, string)
 	SetRegistrationPeriod(string, string) error
+
+	ResetEnrollments() error
 }
 
 type AuthServiceInterface interface {

@@ -47,7 +47,7 @@ func InitRouter(
 
 			setup := admin.Group("/setup")
 			{
-				// todo : reset과 init atomic하게 묶기!!
+				// todo : reset과 init atomic하게 묶기?
 				// admin.POST("/students/init", adminHandler.RegisterStudents)
 
 				setup.POST("/students/register", adminHandler.RegisterStudents)
@@ -57,6 +57,8 @@ func InitRouter(
 				setup.DELETE("/courses/:course_id", adminHandler.DeleteCourse)
 				setup.POST("/courses/register", adminHandler.RegisterCourses)
 				setup.DELETE("/courses/reset", adminHandler.ResetCourses)
+
+				setup.DELETE("/enrollments/reset", adminHandler.ResetEnrollments)
 			}
 
 			// 수강 신청 기간 중에는 어떻게?

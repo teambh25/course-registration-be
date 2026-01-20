@@ -34,6 +34,16 @@ func (r *EnrollmentRepository) DeleteEnrollment(studentID uint, courseID uint) e
 	return nil
 }
 
+func (r *EnrollmentRepository) DeleteAllEnrollments() error {
+	if err := r.db.Migrator().DropTable(&models.Enrollment{}); err != nil {
+		return fmt.Errorf("drop table failed: %w", err)
+	}
+	if err := r.db.AutoMigrate(&models.Enrollment{}); err != nil {
+		return fmt.Errorf("auto migrate failed: %w", err)
+	}
+	return nil
+}
+
 func (r *EnrollmentRepository) FetchAllEnrollments() ([]models.Enrollment, error) {
 	var enrollments []models.Enrollment
 	err := r.db.Find(&enrollments).Error

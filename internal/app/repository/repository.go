@@ -21,4 +21,5 @@ type EnrollmentRepositoryInterface interface {
 	InsertEnrollment(enrollment *models.Enrollment) error
 	DeleteEnrollment(studentID uint, courseID uint) error
 	FetchAllEnrollments() ([]models.Enrollment, error)
+	DeleteAllEnrollments() error
 }

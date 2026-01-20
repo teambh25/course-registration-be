@@ -209,6 +209,18 @@ func (s *AdminService) ResetCourses() error {
 	return nil
 }
 
+func (s *AdminService) ResetEnrollments() error {
+	err := s.regState.RunIfEnabled(false, func() error {
+		return s.enrollRepo.DeleteAllEnrollments()
+	})
+	if err != nil {
+		log.Println("reset enrollment failed:", err.Error())
+		return err
+	}
+
+	return nil
+}
+
 // func (s *AdminService) GetEnrolledStudentsByCourse(courseID uint) ([]Student, error)
 // func (s *AdminService) ForceEnrollStudent(courseID uint, studentID uint) error
 // func (s *AdminService) CancelEnrollment(courseID uint, studentID uint) error
