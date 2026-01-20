@@ -15,8 +15,7 @@ def admin_login(url: str, admin_id: str, admin_pw: str) -> requests.Session:
         print(f"Admin login successful. Status code: {response.status_code}")
         return session
     except requests.exceptions.RequestException as e:
-        print(f"Admin login failed. Error: {e}")
-        raise
+        raise Exception(f"Admin login failed. Error: {e}")
 
 
 def start_registration(url: str, session: requests.Session):
@@ -30,7 +29,35 @@ def start_registration(url: str, session: requests.Session):
         )
         response.raise_for_status()
         print(f"Registration started successfully. Status code: {response.status_code}")
-        return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"Failed to start registration. Error: {e}")
-        raise
+        raise Exception(f"Failed to start registration. Error: {e}")
+
+
+def pause_registration(url: str, session: requests.Session):
+    """Pause registration via admin API"""
+    try:
+        cookies = session.cookies.get_dict()
+        cookie_header = "; ".join([f"{k}={v}" for k, v in cookies.items()])
+        response = session.post(
+            os.path.join(url, "api/v1/admin/registration/pause"),
+            headers={"Cookie": cookie_header},
+        )
+        response.raise_for_status()
+        print(f"Registration paused successfully. Status code: {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to pause registration. Error: {e}")
+
+
+def reset_enrollments(url: str, session: requests.Session):
+    """Reset all enrollments via admin API"""
+    try:
+        cookies = session.cookies.get_dict()
+        cookie_header = "; ".join([f"{k}={v}" for k, v in cookies.items()])
+        response = session.delete(
+            os.path.join(url, "api/v1/admin/setup/enrollments/reset"),
+            headers={"Cookie": cookie_header},
+        )
+        response.raise_for_status()
+        print(f"Enrollments reset successfully. Status code: {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to reset enrollments. Error: {e}")

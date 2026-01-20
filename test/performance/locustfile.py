@@ -3,11 +3,15 @@ import logging
 import random
 
 from locust import HttpUser, task, between, events
-from admin_utils import admin_login, start_registration
+from admin_utils import (
+    admin_login,
+    start_registration,
+    pause_registration,
+    reset_enrollments,
+)
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 # Configuration
@@ -22,10 +26,10 @@ TOTAL_COURSES = 0
 def load_test_data():
     global students, courses, TOTAL_COURSES
 
-    with open('/mnt/locust/students.json', 'r', encoding='utf-8') as f:
+    with open("/mnt/locust/students.json", "r", encoding="utf-8") as f:
         students = json.load(f)
 
-    with open('/mnt/locust/courses.json', 'r', encoding='utf-8') as f:
+    with open("/mnt/locust/courses.json", "r", encoding="utf-8") as f:
         courses = json.load(f)
 
     TOTAL_COURSES = len(courses)
@@ -42,9 +46,11 @@ def on_test_start(environment, **kwargs):
         logging.info(f"Starting registration via admin API at {host}")
         try:
             session = admin_login(host, ADMIN_ID, ADMIN_PW)
+            pause_registration(host, session)
+            reset_enrollments(host, session)
             start_registration(host, session)
         except Exception as e:
-            logging.error(f"Failed to start registration: {e}")
+            raise Exception(f"Failed to setup test: {e}")
 
 
 class Student(HttpUser):
@@ -59,24 +65,24 @@ class Student(HttpUser):
             raise StopIteration("Student pool exhausted")
 
         student = students.pop()
-        logging.info(f"Remaining students: {len(students)}, Current: {student['phone_number']}")
+        logging.info(
+            f"Remaining students: {len(students)}, Current: {student['phone_number']}"
+        )
 
         response = self.client.post(
             "/api/v1/auth/login",
             json={
                 "username": student["phone_number"],
-                "password": student["birth_date"]
-            }
+                "password": student["birth_date"],
+            },
         )
 
         if response.status_code == 200:
             logging.info(f"Login successful: {student['phone_number']}")
         else:
-            logging.error(f"Login failed: {response.status_code}, student: {student['phone_number']}")
-
-        for cookie in self.client.cookies:
-            cookie.path = "/"
-            cookie.secure = False
+            logging.error(
+                f"Login failed: {response.status_code}, student: {student['phone_number']}"
+            )
 
         return student
 
@@ -92,7 +98,7 @@ class Student(HttpUser):
             "/api/v1/course-reg/enrollment",
             json={"course_id": course_id},
             name="/api/v1/course-reg/enrollment",
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 result = response.json()
@@ -100,7 +106,11 @@ class Student(HttpUser):
                     response.success()
                 else:
                     response.success()  # Business logic failure treated as success
-                    logging.info(f"Enrollment rejected: course_id={course_id}, reason={result.get('message')}")
+                    logging.info(
+                        f"Enrollment rejected: course_id={course_id}, reason={result.get('message')}"
+                    )
             else:
                 response.failure(f"HTTP {response.status_code}")
-                logging.error(f"Enrollment request failed: status={response.status_code}")
+                logging.error(
+                    f"Enrollment request failed: status={response.status_code}"
+                )
