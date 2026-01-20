@@ -1,6 +1,7 @@
 package service
 
 import (
+	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/models"
 	"course-reg/internal/pkg/constant"
 )
@@ -27,6 +28,6 @@ type AuthServiceInterface interface {
 }
 
 type CourseRegServiceInterface interface {
-	Enroll(studentID, courseID uint) (bool, string)
+	Enroll(studentID, courseID uint) worker.EnrollmentResult
 	// CancelEnrollment(studentID, courseID uint) (success bool, message string, allSeats map[uint]int)
 }

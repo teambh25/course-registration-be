@@ -2,6 +2,7 @@ package handler
 
 import (
 	"course-reg/internal/app/domain/dto"
+	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/service"
 	"log"
 	"net/http"
@@ -32,13 +33,24 @@ func (h *CourseRegHandler) EnrollCourse(c *gin.Context) {
 		return
 	}
 
-	success, message := h.courseRegService.Enroll(studentID, req.CourseID)
+	result := h.courseRegService.Enroll(studentID, req.CourseID)
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": success,
-		"message": message,
-		// "remaining_seats": allSeats,
-	})
+	c.JSON(enrollResultToHTTPStatus(result), gin.H{"message": result.String()})
+}
+
+func enrollResultToHTTPStatus(r worker.EnrollmentResult) int {
+	switch r {
+	case worker.EnrollSuccess:
+		return http.StatusOK
+	case worker.EnrollCourseNotFound, worker.EnrollStudentNotFound:
+		return http.StatusNotFound
+	case worker.EnrollTimeConflict, worker.EnrollAlreadyEnrolled, worker.EnrollCourseFull:
+		return http.StatusConflict
+	case worker.EnrollNotInPeriod:
+		return http.StatusForbidden
+	default:
+		return http.StatusInternalServerError
+	}
 }
 
 // func (h *CourseRegHandler) CancelEnrollment(c *gin.Context) {

@@ -27,19 +27,19 @@ func NewCourseRegService(
 	}
 }
 
-func (s *CourseRegService) Enroll(studentID, courseID uint) (bool, string) {
-	var resp worker.EnrollmentResponse
+func (s *CourseRegService) Enroll(studentID, courseID uint) worker.EnrollmentResult {
+	var result worker.EnrollmentResult
 
 	err := s.regState.RunIfEnabled(true, func() error {
-		resp = s.enrollmentWorker.Enroll(studentID, courseID)
+		result = s.enrollmentWorker.Enroll(studentID, courseID)
 		return nil
 	})
 
 	if err != nil {
-		return false, "수강신청 기간이 아닙니다"
+		return worker.EnrollNotInPeriod
 	}
 
-	return resp.Success, resp.Message
+	return result
 }
 
 // func (s *CourseRegService) CancelEnrollment(studentID, courseID uint) (bool, string, map[uint]int) {

@@ -100,17 +100,20 @@ class Student(HttpUser):
             name="/api/v1/course-reg/enrollment",
             catch_response=True,
         ) as response:
+            result = response.json()
+            message = result.get("message", "")
+
             if response.status_code == 200:
-                result = response.json()
-                if result.get("success"):
-                    response.success()
-                else:
-                    response.success()  # Business logic failure treated as success
-                    logging.info(
-                        f"Enrollment rejected: course_id={course_id}, reason={result.get('message')}"
-                    )
+                response.success()
+                logging.info(f"Enrollment success: course_id={course_id}")
+            elif response.status_code in (404, 409, 403):
+                # Business logic rejection (not found, conflict, forbidden)
+                response.success()
+                logging.info(
+                    f"Enrollment rejected: course_id={course_id}, status={response.status_code}, message={message}"
+                )
             else:
                 response.failure(f"HTTP {response.status_code}")
                 logging.error(
-                    f"Enrollment request failed: status={response.status_code}"
+                    f"Enrollment request failed: course_id={course_id}, status={response.status_code}, message={message}"
                 )

@@ -27,18 +27,42 @@ const (
 	ADMIN_CANCEL
 )
 
+// EnrollmentResult represents the result of an enrollment operation
+type EnrollmentResult int
+
+const (
+	EnrollSuccess EnrollmentResult = iota
+	EnrollCourseNotFound
+	EnrollStudentNotFound
+	EnrollTimeConflict
+	EnrollAlreadyEnrolled
+	EnrollCourseFull
+	EnrollNotInPeriod
+)
+
+var enrollResultMessages = map[EnrollmentResult]string{
+	EnrollSuccess:         "수강신청 성공",
+	EnrollCourseNotFound:  "존재하지 않는 강의입니다",
+	EnrollStudentNotFound: "존재하지 않는 학생입니다",
+	EnrollTimeConflict:    "시간이 겹치는 강의가 있습니다",
+	EnrollAlreadyEnrolled: "이미 신청한 강의입니다",
+	EnrollCourseFull:      "정원이 초과 되었습니다",
+	EnrollNotInPeriod:     "수강신청 기간이 아닙니다",
+}
+
+func (r EnrollmentResult) String() string {
+	if msg, ok := enrollResultMessages[r]; ok {
+		return msg
+	}
+	return "알 수 없는 오류"
+}
+
 // EnrollmentRequest represents an enrollment request
 type EnrollmentRequest struct {
 	Type      RequestType
 	StudentID uint
 	CourseID  uint
-	Response  chan EnrollmentResponse
-}
-
-// EnrollmentResponse represents the response to an enrollment request
-type EnrollmentResponse struct {
-	Success bool
-	Message string
+	Response  chan EnrollmentResult
 }
 
 func NewEnrollmentWorker(queueSize int, enrollRepo repository.EnrollmentRepositoryInterface) *EnrollmentWorker {
@@ -73,29 +97,29 @@ func (w *EnrollmentWorker) Stop() {
 
 func (w *EnrollmentWorker) worker() {
 	for req := range w.requestChan {
-		var response EnrollmentResponse
+		var result EnrollmentResult
 
 		switch req.Type {
 		case ENROLL:
-			response = w.processEnroll(req)
+			result = w.processEnroll(req)
 			// case READ_ALL:
-			// 	response = w.processReadAll()
+			// 	result = w.processReadAll()
 			// case CANCEL:
-			// 	response = w.processCancel(req)
+			// 	result = w.processCancel(req)
 			// case ADMIN_ENROLL:
-			// 	response = w.processAdminEnroll(req)
+			// 	result = w.processAdminEnroll(req)
 		}
 
-		req.Response <- response
+		req.Response <- result
 	}
 }
 
-func (w *EnrollmentWorker) Enroll(studentID, courseID uint) EnrollmentResponse {
+func (w *EnrollmentWorker) Enroll(studentID, courseID uint) EnrollmentResult {
 	req := EnrollmentRequest{
 		Type:      ENROLL,
 		StudentID: studentID,
 		CourseID:  courseID,
-		Response:  make(chan EnrollmentResponse, 1),
+		Response:  make(chan EnrollmentResult, 1),
 	}
 
 	w.requestChan <- req
@@ -103,55 +127,37 @@ func (w *EnrollmentWorker) Enroll(studentID, courseID uint) EnrollmentResponse {
 }
 
 // processEnroll handles enrollment logic
-func (w *EnrollmentWorker) processEnroll(req EnrollmentRequest) EnrollmentResponse {
+func (w *EnrollmentWorker) processEnroll(req EnrollmentRequest) EnrollmentResult {
 	studentID := req.StudentID
 	courseID := req.CourseID
 
 	// Todo : validate handler쪽으로 옮기기
 	if !w.cache.CourseExists(courseID) {
-		return EnrollmentResponse{
-			Success: false,
-			Message: "존재하지 않는 강의입니다",
-		}
+		return EnrollCourseNotFound
 	}
 
 	// Todo : 500 에러 처리
 	if !w.cache.StudentExists(studentID) {
-		return EnrollmentResponse{
-			Success: false,
-			Message: "존재하지 않는 학생입니다",
-		}
+		return EnrollStudentNotFound
 	}
 
 	if w.cache.HasTimeConflict(studentID, courseID) {
-		return EnrollmentResponse{
-			Success: false,
-			Message: "시간이 겹치는 강의가 있습니다",
-		}
+		return EnrollTimeConflict
 	}
 
 	if w.cache.IsStudentEnrolled(studentID, courseID) {
-		return EnrollmentResponse{
-			Success: false,
-			Message: "이미 신청한 강의입니다",
-		}
+		return EnrollAlreadyEnrolled
 	}
 
 	pos, err := w.cache.GetPosIfNotFull(courseID)
 	if err != nil {
-		return EnrollmentResponse{
-			Success: false,
-			Message: "정원이 초과 되었습니다",
-		}
+		return EnrollCourseFull
 	}
 
 	w.enrollRepo.InsertEnrollment(&models.Enrollment{StudentID: studentID, CourseID: courseID, Position: pos})
 	w.cache.EnrollStudent(studentID, courseID)
 
-	return EnrollmentResponse{
-		Success: true,
-		Message: "수강신청 성공",
-	}
+	return EnrollSuccess
 }
 
 func (w *EnrollmentWorker) processAddWaitList() {
