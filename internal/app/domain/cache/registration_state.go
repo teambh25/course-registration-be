@@ -33,6 +33,7 @@ func (rs *RegistrationState) ChangeEnabledAndAct(enabled bool, act func() error)
 	defer rs.mu.Unlock()
 
 	if rs.enabled == enabled {
+		// todo : 커스텀 예외로 다른 에러와 구분 될 수 있게 만들기
 		return fmt.Errorf("enabled aleardy set %v", enabled)
 	}
 

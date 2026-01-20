@@ -182,6 +182,8 @@ func (s *AdminService) DeleteCourse(courseID uint) error {
 
 func (s *AdminService) RegisterCourses(courses []models.Course) error {
 	// todo: course가 없을 때만 실행 가능하도록?
+	// todo: shcedule에 대한 validation?
+
 	err := s.regState.RunIfEnabled(false, func() error {
 		return s.courseRepo.BulkInsertCourses(courses)
 	})

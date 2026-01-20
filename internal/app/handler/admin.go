@@ -87,6 +87,7 @@ func (h *AdminHandler) RegisterStudents(c *gin.Context) {
 func (h *AdminHandler) ResetStudents(c *gin.Context) {
 	if err := h.adminService.ResetStudents(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "학생 리스트 삭제 실패, 개발자 호출 필요!"})
+		return
 	}
 
 	c.Status(http.StatusOK)
@@ -146,6 +147,16 @@ func (h *AdminHandler) RegisterCourses(c *gin.Context) {
 func (h *AdminHandler) ResetCourses(c *gin.Context) {
 	if err := h.adminService.ResetCourses(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "강의 리스트 삭제 실패, 개발자 호출 필요!"})
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
+func (h *AdminHandler) ResetEnrollments(c *gin.Context) {
+	if err := h.adminService.ResetEnrollments(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "수강 신청 초기화 실패, 개발자 호출 필요!"})
+		return
 	}
 
 	c.Status(http.StatusOK)
