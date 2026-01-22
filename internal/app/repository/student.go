@@ -7,6 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const studentBatchSize = 100
+
 type StudentRepository struct {
 	db *gorm.DB
 }
@@ -27,7 +29,7 @@ func (r *StudentRepository) FetchPassword(username string) (uint, string, error)
 
 func (r *StudentRepository) BulkInsertStudents(students []models.Student) error {
 	tx := r.db.Begin()
-	if err := tx.CreateInBatches(students, 100).Error; err != nil {
+	if err := tx.CreateInBatches(students, studentBatchSize).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("create in batches failed: %w", err)
 	}

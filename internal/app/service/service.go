@@ -17,8 +17,8 @@ type AdminServiceInterface interface {
 	GetRegistrationState() bool
 	StartRegistration() error
 	PauseRegistration() error
-	GetRegistrationPeriod() (string, string)
-	SetRegistrationPeriod(string, string) error
+	// GetRegistrationPeriod() (string, string)
+	// SetRegistrationPeriod(string, string) error
 
 	ResetEnrollments() error
 }

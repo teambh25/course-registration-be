@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"course-reg/internal/app/domain/dto"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/service"
 	"log"
@@ -41,28 +40,28 @@ func (h *AdminHandler) GetRegistrationState(c *gin.Context) {
 }
 
 func (h *AdminHandler) SetRegistrationPeriod(c *gin.Context) {
-	var req dto.SetRegistrationPeriodRequest
+	// var req dto.SetRegistrationPeriodRequest
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Println("set registration schedule failed:", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 수강 신청 기간"})
-		return
-	}
+	// if err := c.ShouldBindJSON(&req); err != nil {
+	// 	log.Println("set registration schedule failed:", err.Error())
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 수강 신청 기간"})
+	// 	return
+	// }
 
-	if err := h.adminService.SetRegistrationPeriod(req.StartTime, req.EndTime); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": ""})
-		return
-	}
+	// if err := h.adminService.SetRegistrationPeriod(req.StartTime, req.EndTime); err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": ""})
+	// 	return
+	// }
 
-	c.Status(http.StatusOK)
+	// c.Status(http.StatusOK)
 }
 
 func (h *AdminHandler) GetRegistrationPeriod(c *gin.Context) {
-	startTime, endTime := h.adminService.GetRegistrationPeriod()
-	c.JSON(http.StatusOK, gin.H{
-		"start_time": startTime,
-		"end_time":   endTime,
-	})
+	// startTime, endTime := h.adminService.GetRegistrationPeriod()
+	// c.JSON(http.StatusOK, gin.H{
+	// 	"start_time": startTime,
+	// 	"end_time":   endTime,
+	// })
 }
 
 func (h *AdminHandler) RegisterStudents(c *gin.Context) {

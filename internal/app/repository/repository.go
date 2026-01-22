@@ -23,3 +23,10 @@ type EnrollmentRepositoryInterface interface {
 	FetchAllEnrollments() ([]models.Enrollment, error)
 	DeleteAllEnrollments() error
 }
+
+type RegistrationConfigRepositoryInterface interface {
+	GetConfig() (*models.RegistrationConfig, error)
+	CreateConfig(config *models.RegistrationConfig) error
+	UpdateEnabled(enabled bool) error
+	UpdatePeriod(startTime, endTime string) error
+}

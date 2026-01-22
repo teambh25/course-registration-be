@@ -20,7 +20,7 @@ func Setup() (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to enable WAL mode: %w", err)
 	}
 
-	if err := db.AutoMigrate(&models.Student{}, &models.Course{}, &models.Enrollment{}); err != nil {
+	if err := db.AutoMigrate(&models.Student{}, &models.Course{}, &models.Enrollment{}, &models.RegistrationConfig{}); err != nil {
 		return nil, fmt.Errorf("failed to migrate database: %w", err)
 	}
 

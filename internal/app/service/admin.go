@@ -1,37 +1,39 @@
 package service
 
 import (
+	"log"
+
 	"course-reg/internal/app/domain/cache"
 	"course-reg/internal/app/domain/export"
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
-	"course-reg/internal/pkg/setting"
-	"course-reg/internal/pkg/utils"
-	"log"
 )
 
 type AdminService struct {
-	studentRepo  repository.StudentRepositoryInterface
-	courseRepo   repository.CourseRepositoryInterface
-	enrollRepo   repository.EnrollmentRepositoryInterface
-	enrollWorker *worker.EnrollmentWorker
-	regState     *cache.RegistrationState
+	studentRepo   repository.StudentRepositoryInterface
+	courseRepo    repository.CourseRepositoryInterface
+	enrollRepo    repository.EnrollmentRepositoryInterface
+	regConfigRepo repository.RegistrationConfigRepositoryInterface
+	enrollWorker  *worker.EnrollmentWorker
+	regState      *cache.RegistrationState
 }
 
 func NewAdminService(
 	s repository.StudentRepositoryInterface,
 	c repository.CourseRepositoryInterface,
 	e repository.EnrollmentRepositoryInterface,
+	rcRepo repository.RegistrationConfigRepositoryInterface,
 	w *worker.EnrollmentWorker,
-	rc *cache.RegistrationState,
+	rs *cache.RegistrationState,
 ) *AdminService {
 	return &AdminService{
-		studentRepo:  s,
-		courseRepo:   c,
-		enrollRepo:   e,
-		enrollWorker: w,
-		regState:     rc,
+		studentRepo:   s,
+		courseRepo:    c,
+		enrollRepo:    e,
+		regConfigRepo: rcRepo,
+		enrollWorker:  w,
+		regState:      rs,
 	}
 }
 
@@ -65,7 +67,7 @@ func (s *AdminService) StartRegistration() error {
 			return err
 		}
 
-		if err := setting.SaveRegistrationState("true"); err != nil {
+		if err := s.regConfigRepo.UpdateEnabled(true); err != nil {
 			log.Println("save registration state failed:", err.Error())
 			return err
 		}
@@ -86,8 +88,8 @@ func (s *AdminService) PauseRegistration() error {
 	err := s.regState.ChangeEnabledAndAct(false, func() error {
 		s.enrollWorker.Stop()
 
-		if err := setting.SaveRegistrationState("false"); err != nil {
-			log.Println("save registration state failed:", err.Error()) // 500
+		if err := s.regConfigRepo.UpdateEnabled(false); err != nil {
+			log.Println("save registration state failed:", err.Error())
 			return err
 		}
 		return nil
@@ -106,27 +108,26 @@ func (s *AdminService) GetRegistrationPeriod() (string, string) {
 
 func (s *AdminService) SetRegistrationPeriod(startTime, endTime string) error {
 	// Validate time format
-	_, err := utils.StringToTime(startTime)
-	if err != nil {
-		log.Println("invalid start time format:", err.Error())
-		return err
-	}
+	// _, err := utils.StringToTime(startTime)
+	// if err != nil {
+	// 	log.Println("invalid start time format:", err.Error())
+	// 	return err
+	// }
 
-	_, err = utils.StringToTime(endTime)
-	if err != nil {
-		log.Println("invalid end time format:", err.Error())
-		return err
-	}
+	// _, err = utils.StringToTime(endTime)
+	// if err != nil {
+	// 	log.Println("invalid end time format:", err.Error())
+	// 	return err
+	// }
 
-	// Update in-memory state
-	s.regState.SetPeriod(startTime, endTime)
+	// // Update in-memory state
+	// s.regState.SetPeriod(startTime, endTime)
 
-	// Save to config file
-	err = setting.SaveRegistrationPeriod(startTime, endTime)
-	if err != nil {
-		log.Println("failed to save registration period:", err.Error())
-		return err
-	}
+	// // Save to DB
+	// if err := s.regConfigRepo.UpdatePeriod(startTime, endTime); err != nil {
+	// 	log.Println("failed to save registration period:", err.Error())
+	// 	return err
+	// }
 
 	return nil
 }

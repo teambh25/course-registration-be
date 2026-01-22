@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -11,11 +12,11 @@ import (
 	"course-reg/internal/app/domain/export"
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/handler"
+	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
 	"course-reg/internal/app/routers"
 	"course-reg/internal/app/service"
 	"course-reg/internal/pkg/database"
-	"course-reg/internal/pkg/setting"
 )
 
 // Application contains all application components and their dependencies
@@ -31,9 +32,10 @@ type Application struct {
 
 // Repositories holds all repository instances
 type Repositories struct {
-	Student    repository.StudentRepositoryInterface
-	Course     repository.CourseRepositoryInterface
-	Enrollment repository.EnrollmentRepositoryInterface
+	Student            repository.StudentRepositoryInterface
+	Course             repository.CourseRepositoryInterface
+	Enrollment         repository.EnrollmentRepositoryInterface
+	RegistrationConfig repository.RegistrationConfigRepositoryInterface
 }
 
 // Services holds all service instances
@@ -115,9 +117,10 @@ func (app *Application) setupRepositories() error {
 	}
 
 	app.Repos = &Repositories{
-		Student:    repository.NewStudentRepository(app.DB),
-		Course:     repository.NewCourseRepository(app.DB),
-		Enrollment: repository.NewEnrollmentRepository(app.DB),
+		Student:            repository.NewStudentRepository(app.DB),
+		Course:             repository.NewCourseRepository(app.DB),
+		Enrollment:         repository.NewEnrollmentRepository(app.DB),
+		RegistrationConfig: repository.NewRegistrationConfigRepository(app.DB),
 	}
 	log.Println("[info] repositories setup completed")
 	return nil
@@ -142,9 +145,27 @@ func (app *Application) setupWorker() error {
 
 // setupRegistrationState initializes the registration state
 func (app *Application) setupRegistrationState() error {
-	enabled, startTime, endTime := setting.LoadRegistrationConfig()
-	app.RegState = cache.NewRegistrationState(enabled, startTime, endTime)
-	log.Printf("[info] registration state setup completed (enabled: %v)", enabled)
+	config, err := app.Repos.RegistrationConfig.GetConfig()
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// 초기 레코드가 없으면 기본값으로 생성
+			config = &models.RegistrationConfig{
+				ID:        1,
+				Enabled:   false,
+				StartTime: "",
+				EndTime:   "",
+			}
+			if err := app.Repos.RegistrationConfig.CreateConfig(config); err != nil {
+				return fmt.Errorf("failed to create initial registration config: %w", err)
+			}
+			log.Println("[info] created initial registration config")
+		} else {
+			return fmt.Errorf("failed to load registration config: %w", err)
+		}
+	}
+	app.RegState = cache.NewRegistrationState(config.Enabled, config.StartTime, config.EndTime)
+	log.Printf("[info] registration state setup completed (enabled: %v, start: %s, end: %s)",
+		config.Enabled, config.StartTime, config.EndTime)
 	return nil
 }
 
@@ -188,7 +209,7 @@ func (app *Application) initializeRegistrationIfEnabled() error {
 func (app *Application) setupServices() error {
 	app.Services = &Services{
 		Auth:      service.NewAuthService(app.Repos.Student),
-		Admin:     service.NewAdminService(app.Repos.Student, app.Repos.Course, app.Repos.Enrollment, app.Worker, app.RegState),
+		Admin:     service.NewAdminService(app.Repos.Student, app.Repos.Course, app.Repos.Enrollment, app.Repos.RegistrationConfig, app.Worker, app.RegState),
 		CourseReg: service.NewCourseRegService(app.Repos.Course, app.Repos.Enrollment, app.Worker, app.RegState),
 	}
 	log.Println("[info] services setup completed")

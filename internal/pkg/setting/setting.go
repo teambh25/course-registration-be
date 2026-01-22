@@ -2,9 +2,11 @@ package setting
 
 import (
 	"log"
+	"os"
+	"strconv"
 	"time"
 
-	"github.com/go-ini/ini"
+	"github.com/joho/godotenv"
 )
 
 type App struct {
@@ -33,65 +35,47 @@ type Secret struct {
 
 var SecretSetting = &Secret{}
 
-type RegistrationStatus struct {
-	Enabled   bool
-	StartTime string
-	EndTime   string
-}
-
-var cfg *ini.File
-
-// Setup initialize the configuration instance
+// Setup initialize the configuration instance from environment variables
 func Setup() {
-	var err error
-	cfg, err = ini.Load("conf/app.ini")
-	if err != nil {
-		log.Fatalf("setting.Setup, fail to parse 'conf/app.ini': %v", err)
-	}
+	// Load .env file if it exists (ignore error if file doesn't exist)
+	_ = godotenv.Load()
 
-	mapTo("app", AppSetting)
-	mapTo("server", ServerSetting)
-	mapTo("secret", SecretSetting)
+	// App settings
+	AppSetting.LogSavePath = getEnvRequired("APP_LOG_SAVE_PATH")
+	AppSetting.LogSaveName = getEnvRequired("APP_LOG_SAVE_NAME")
+	AppSetting.LogFileExt = getEnvRequired("APP_LOG_FILE_EXT")
+	AppSetting.TimeFormat = getEnvRequired("APP_TIME_FORMAT")
 
-	ServerSetting.ReadTimeout = ServerSetting.ReadTimeout * time.Second
-	ServerSetting.WriteTimeout = ServerSetting.WriteTimeout * time.Second
+	// Server settings
+	ServerSetting.RunMode = getEnvRequired("SERVER_RUN_MODE")
+	ServerSetting.HttpPort = getEnvAsIntRequired("SERVER_HTTP_PORT")
+	ServerSetting.ReadTimeout = time.Duration(getEnvAsIntRequired("SERVER_READ_TIMEOUT")) * time.Second
+	ServerSetting.WriteTimeout = time.Duration(getEnvAsIntRequired("SERVER_WRITE_TIMEOUT")) * time.Second
+
+	// Secret settings
+	SecretSetting.SessionKey = getEnvRequired("SECRET_SESSION_KEY")
+	SecretSetting.AdminID = getEnvRequired("SECRET_ADMIN_ID")
+	SecretSetting.AdminPW = getEnvRequired("SECRET_ADMIN_PW")
 }
 
-func mapTo(section string, v interface{}) {
-	err := cfg.Section(section).MapTo(v)
-	if err != nil {
-		log.Fatalf("Cfg.MapTo %s err: %v", section, err)
+// getEnvRequired retrieves an environment variable or exits if not set
+func getEnvRequired(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("Required environment variable %s is not set", key)
 	}
+	return value
 }
 
-// LoadRegistrationConfig loads registration config from ini file
-func LoadRegistrationConfig() (enabled bool, startTime, endTime string) {
-	var regStatus RegistrationStatus
-	mapTo("registration", &regStatus)
-	return regStatus.Enabled, regStatus.StartTime, regStatus.EndTime
-}
-
-// SaveRegistrationState saves registration enabled state to ini file
-func SaveRegistrationState(enabled string) error {
-
-	cfg.Section("registration").Key("Enabled").SetValue(enabled)
-	err := cfg.SaveTo("conf/app.ini")
-	if err != nil {
-		return err
+// getEnvAsIntRequired retrieves an environment variable as an integer or exits if not set/invalid
+func getEnvAsIntRequired(key string) int {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("Required environment variable %s is not set", key)
 	}
-	return nil
-}
-
-// SaveRegistrationPeriod saves registration period to ini file
-func SaveRegistrationPeriod(startTime, endTime string) error {
-
-	cfg.Section("registration").Key("StartTime").SetValue(startTime)
-	cfg.Section("registration").Key("EndTime").SetValue(endTime)
-
-	err := cfg.SaveTo("conf/app.ini")
+	intValue, err := strconv.Atoi(value)
 	if err != nil {
-		return err
+		log.Fatalf("Environment variable %s must be a valid integer, got: %s", key, value)
 	}
-
-	return nil
+	return intValue
 }

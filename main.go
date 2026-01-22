@@ -11,7 +11,7 @@ import (
 
 func init() {
 	setting.Setup()
-	// logging.Setup() // logging 할 수 있는 환경일 떄 다시 사용
+	// logging.Setup() // todo : 파일에 로깅할 수 있는 환경이 아니라 삭제해도 될거 같은데?
 }
 
 func main() {

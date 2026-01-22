@@ -7,6 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const courseBatchSize = 100
+
 type CourseRepository struct {
 	db *gorm.DB
 }
@@ -17,7 +19,7 @@ func NewCourseRepository(db *gorm.DB) *CourseRepository {
 
 func (r *CourseRepository) BulkInsertCourses(courses []models.Course) error {
 	tx := r.db.Begin()
-	if err := tx.CreateInBatches(courses, 100).Error; err != nil {
+	if err := tx.CreateInBatches(courses, courseBatchSize).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("create in batches failed: %w", err)
 	}

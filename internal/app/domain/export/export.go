@@ -16,16 +16,16 @@ func ExportCoursesToJson(courseRepo repository.CourseRepositoryInterface) error 
 
 	courses, err := courseRepo.FetchAllCourses()
 	if err != nil {
-		log.Println("fetch all courses failed:", err.Error())
+		log.Println("[error] fetch all courses failed:", err.Error())
 		return err
 	}
 
 	err = file.SaveJSON(constant.StaticCoursesFilePath, courses)
 	if err != nil {
-		log.Println("save JSON failed:", err.Error())
+		log.Println("[error] save JSON failed:", err.Error())
 		return err
 	}
 
-	log.Printf("Successfully exported %d courses to %s", len(courses), constant.StaticCoursesFilePath)
+	log.Printf("[info] Successfully exported %d courses to %s", len(courses), constant.StaticCoursesFilePath)
 	return nil
 }
