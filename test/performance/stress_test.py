@@ -46,11 +46,18 @@ def on_test_start(environment, **kwargs):
         logging.info(f"Starting registration via admin API at {host}")
         try:
             session = admin_login(host, ADMIN_ID, ADMIN_PW)
-            pause_registration(host, session)
+            # reset_enrollments는 pause 상태에서만 실행 가능
+            try:
+                pause_registration(host, session)
+            except Exception as e:
+                logging.info(f"Pause failed (may already be paused): {e}")
             reset_enrollments(host, session)
             start_registration(host, session)
         except Exception as e:
-            raise Exception(f"Failed to setup test: {e}")
+            logging.error(f"Failed to setup test: {e}")
+            if environment.runner:
+                environment.runner.quit()
+            raise
 
 
 class Student(HttpUser):
@@ -65,9 +72,9 @@ class Student(HttpUser):
             raise StopIteration("Student pool exhausted")
 
         student = students.pop()
-        logging.info(
-            f"Remaining students: {len(students)}, Current: {student['phone_number']}"
-        )
+        # logging.info(
+        #     f"Remaining students: {len(students)}, Current: {student['phone_number']}"
+        # )
 
         response = self.client.post(
             "/api/v1/auth/login",
@@ -78,7 +85,8 @@ class Student(HttpUser):
         )
 
         if response.status_code == 200:
-            logging.info(f"Login successful: {student['phone_number']}")
+            # logging.info(f"Login successful: {student['phone_number']}")
+            pass
         else:
             logging.error(
                 f"Login failed: {response.status_code}, student: {student['phone_number']}"
@@ -100,18 +108,24 @@ class Student(HttpUser):
             name="/api/v1/course-reg/enrollment",
             catch_response=True,
         ) as response:
-            result = response.json()
-            message = result.get("message", "")
+            try:
+                result = response.json()
+                message = result.get("message")
+            except Exception as e:
+                message = ""
+                logging.error(f"error error error : {response}")
+
+            
 
             if response.status_code == 200:
                 response.success()
-                logging.info(f"Enrollment success: course_id={course_id}")
+                # logging.info(f"Enrollment success: course_id={course_id}")
             elif response.status_code in (404, 409, 403):
                 # Business logic rejection (not found, conflict, forbidden)
                 response.success()
-                logging.info(
-                    f"Enrollment rejected: course_id={course_id}, status={response.status_code}, message={message}"
-                )
+                # logging.info(
+                #     f"Enrollment rejected: course_id={course_id}, status={response.status_code}, message={message}"
+                # )
             else:
                 response.failure(f"HTTP {response.status_code}")
                 logging.error(

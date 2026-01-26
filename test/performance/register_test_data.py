@@ -3,7 +3,7 @@ import json
 import requests
 import argparse
 
-from admin_utils import admin_login
+from admin_utils import admin_login, pause_registration
 
 
 def register_studnet_data(url: str, session: requests.Session):
@@ -75,6 +75,7 @@ if __name__ == "__main__":
 
     session = admin_login(args.url, args.admin_id, args.admin_pw)
 
+    pause_registration(args.url, session)
     if args.reset:
         reset_data(args.url, session)
     register_studnet_data(args.url, session)
