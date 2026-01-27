@@ -19,7 +19,9 @@ func InitRouter(
 ) *gin.Engine {
 	gin.SetMode(setting.ServerSetting.RunMode) // set gin mode (must be called before gin.New())
 	r := gin.New()
-	r.Use(gin.Logger())
+	if gin.Mode() != gin.ReleaseMode {
+		r.Use(gin.Logger())
+	}
 	r.Use(gin.Recovery())    // panic 발생시 500
 	r.Use(middleware.CORS()) // CORS
 
