@@ -5,19 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/glebarez/sqlite"
+	"course-reg/internal/pkg/setting"
+
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 func Setup() (*gorm.DB, error) {
-	db, err := gorm.Open(sqlite.Open("db/course_reg.db"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	db, err := gorm.Open(postgres.Open(setting.DatabaseSetting.URL), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect database: %w", err)
-	}
-
-	if err := db.Exec("PRAGMA journal_mode=WAL;").Error; err != nil {
-		return nil, fmt.Errorf("failed to enable WAL mode: %w", err)
 	}
 
 	if err := db.AutoMigrate(&models.Student{}, &models.Course{}, &models.Enrollment{}, &models.RegistrationConfig{}); err != nil {
@@ -30,7 +28,7 @@ func Setup() (*gorm.DB, error) {
 	}
 
 	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetMaxOpenConns(50)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
 	return db, nil

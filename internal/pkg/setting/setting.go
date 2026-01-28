@@ -35,6 +35,12 @@ type Secret struct {
 
 var SecretSetting = &Secret{}
 
+type Database struct {
+	URL string
+}
+
+var DatabaseSetting = &Database{}
+
 // Setup initialize the configuration instance from environment variables
 func Setup() {
 	// Load .env file if it exists (ignore error if file doesn't exist)
@@ -51,6 +57,9 @@ func Setup() {
 	ServerSetting.HttpPort = getEnvAsIntRequired("SERVER_HTTP_PORT")
 	ServerSetting.ReadTimeout = time.Duration(getEnvAsIntRequired("SERVER_READ_TIMEOUT")) * time.Second
 	ServerSetting.WriteTimeout = time.Duration(getEnvAsIntRequired("SERVER_WRITE_TIMEOUT")) * time.Second
+
+	// Database settings
+	DatabaseSetting.URL = getEnvRequired("DATABASE_URL")
 
 	// Secret settings
 	SecretSetting.SessionKey = getEnvRequired("SECRET_SESSION_KEY")
