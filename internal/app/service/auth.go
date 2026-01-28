@@ -4,6 +4,7 @@ import (
 	"course-reg/internal/app/repository"
 	"course-reg/internal/pkg/constant"
 	"course-reg/internal/pkg/setting"
+	"log"
 )
 
 const (
@@ -27,8 +28,13 @@ func (a *AuthService) Check(username string, password string) (constant.UserRole
 
 	if is_admin := setting.SecretSetting.AdminID == username && setting.SecretSetting.AdminPW == password; is_admin {
 		role = constant.RoleAdmin
-	} else if userID, pw, err = a.studentRepo.FetchPassword(username); err == nil && pw == password {
-		role = constant.RoleStudent
+	} else {
+		userID, pw, err = a.studentRepo.FetchPassword(username)
+		if err != nil {
+			log.Println("[error] fetch password failed", err.Error())
+		} else if pw == password {
+			role = constant.RoleStudent
+		}
 	}
 	return role, userID, err
 }

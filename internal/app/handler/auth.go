@@ -31,7 +31,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	role, userID, err := h.authService.Check(u.Username, u.Password)
-	if err != nil || role == 0 {
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "서버 에러"})
+		return
+	}
+	if role == 0 { // Todo : zero value 체크는 안티패턴
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "잘못된 ID/PW"})
 		return
 	}
