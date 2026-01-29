@@ -27,8 +27,8 @@ func Setup() (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to return sql.DB: %w", err)
 	}
 
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(50)
+	sqlDB.SetMaxIdleConns(setting.DatabaseSetting.MaxIdleConns)
+	sqlDB.SetMaxOpenConns(setting.DatabaseSetting.MaxConns)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
 	return db, nil

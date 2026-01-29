@@ -36,7 +36,9 @@ type Secret struct {
 var SecretSetting = &Secret{}
 
 type Database struct {
-	URL string
+	URL          string
+	MaxConns     int
+	MaxIdleConns int
 }
 
 var DatabaseSetting = &Database{}
@@ -60,6 +62,8 @@ func Setup() {
 
 	// Database settings
 	DatabaseSetting.URL = getEnvRequired("DATABASE_URL")
+	DatabaseSetting.MaxConns = getEnvAsIntRequired("DATABASE_MAX_CONNS")
+	DatabaseSetting.MaxIdleConns = getEnvAsIntRequired("DATABASE_MAX_IDLE_CONNS")
 
 	// Secret settings
 	SecretSetting.SessionKey = getEnvRequired("SECRET_SESSION_KEY")
