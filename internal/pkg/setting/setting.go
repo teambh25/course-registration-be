@@ -36,9 +36,10 @@ type Secret struct {
 var SecretSetting = &Secret{}
 
 type Database struct {
-	URL          string
-	MaxConns     int
-	MaxIdleConns int
+	URL             string
+	PoolSize        int
+	ConnMaxLifetime time.Duration
+	ConnMaxIdleTime time.Duration
 }
 
 var DatabaseSetting = &Database{}
@@ -62,8 +63,9 @@ func Setup() {
 
 	// Database settings
 	DatabaseSetting.URL = getEnvRequired("DATABASE_URL")
-	DatabaseSetting.MaxConns = getEnvAsIntRequired("DATABASE_MAX_CONNS")
-	DatabaseSetting.MaxIdleConns = getEnvAsIntRequired("DATABASE_MAX_IDLE_CONNS")
+	DatabaseSetting.PoolSize = getEnvAsIntRequired("DATABASE_POOL_SIZE")
+	DatabaseSetting.ConnMaxLifetime = time.Duration(getEnvAsIntRequired("DATABASE_CONN_MAX_LIFETIME")) * time.Minute
+	DatabaseSetting.ConnMaxIdleTime = time.Duration(getEnvAsIntRequired("DATABASE_CONN_MAX_IDLE_TIME")) * time.Minute
 
 	// Secret settings
 	SecretSetting.SessionKey = getEnvRequired("SECRET_SESSION_KEY")

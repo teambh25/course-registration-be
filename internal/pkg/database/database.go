@@ -3,7 +3,6 @@ package database
 import (
 	"course-reg/internal/app/models"
 	"fmt"
-	"time"
 
 	"course-reg/internal/pkg/setting"
 
@@ -27,9 +26,11 @@ func Setup() (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to return sql.DB: %w", err)
 	}
 
-	sqlDB.SetMaxIdleConns(setting.DatabaseSetting.MaxIdleConns)
-	sqlDB.SetMaxOpenConns(setting.DatabaseSetting.MaxConns)
-	sqlDB.SetConnMaxLifetime(time.Hour)
+	// Fix DB connection pool size by setting MaxIdleConns == MaxOpenConns
+	sqlDB.SetMaxIdleConns(setting.DatabaseSetting.PoolSize)
+	sqlDB.SetMaxOpenConns(setting.DatabaseSetting.PoolSize)
 
+	sqlDB.SetConnMaxLifetime(setting.DatabaseSetting.ConnMaxLifetime)
+	sqlDB.SetConnMaxIdleTime(setting.DatabaseSetting.ConnMaxIdleTime)
 	return db, nil
 }
