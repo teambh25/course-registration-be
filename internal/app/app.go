@@ -235,25 +235,25 @@ func (app *Application) setupRouter() error {
 }
 
 // Shutdown gracefully shuts down the application
-// func (app *Application) Shutdown() error {
-// 	log.Println("[info] shutting down application")
+func (app *Application) Shutdown() error {
+	log.Println("[info] shutting down application")
 
-// 	// Stop worker if running
-// 	if app.Worker != nil && app.RegState != nil && app.RegState.IsEnabled() {
-// 		log.Println("[info] stopping enrollment worker")
-// 		app.Worker.Stop()
-// 	}
+	// Stop worker if running
+	if app.Worker != nil && app.RegState != nil && app.RegState.IsEnabled() {
+		log.Println("[info] stopping enrollment worker")
+		app.Worker.Stop()
+	}
 
-// 	// Close database connection if needed
-// 	if app.DB != nil {
-// 		sqlDB, err := app.DB.DB()
-// 		if err == nil {
-// 			if err := sqlDB.Close(); err != nil {
-// 				return fmt.Errorf("failed to close database: %w", err)
-// 			}
-// 		}
-// 	}
+	// Close database connection if needed
+	if app.DB != nil {
+		sqlDB, err := app.DB.DB()
+		if err == nil {
+			if err := sqlDB.Close(); err != nil {
+				return fmt.Errorf("failed to close database: %w", err)
+			}
+		}
+	}
 
-// 	log.Println("[info] application shutdown completed")
-// 	return nil
-// }
+	log.Println("[info] application shutdown completed")
+	return nil
+}
