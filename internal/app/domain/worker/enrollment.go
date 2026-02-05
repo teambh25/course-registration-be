@@ -77,8 +77,13 @@ func (w *EnrollmentWorker) Start(students []models.Student, courses []models.Cou
 		return errors.New("worker already running")
 	}
 
+	enrollmentCache, err := cache.NewEnrollmentCacheWithData(students, courses, enrollments)
+	if err != nil {
+		return err
+	}
+
 	w.requestChan = make(chan EnrollmentRequest, w.queueSize)
-	w.cache = cache.NewEnrollmentCacheWithData(students, courses, enrollments)
+	w.cache = enrollmentCache
 
 	w.wg.Add(1)
 	go func() {

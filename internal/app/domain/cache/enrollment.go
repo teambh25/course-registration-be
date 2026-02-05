@@ -35,13 +35,15 @@ func NewEnrollmentCache() *EnrollmentCache {
 	}
 }
 
-func NewEnrollmentCacheWithData(students []models.Student, courses []models.Course, enrollments []models.Enrollment) *EnrollmentCache {
+func NewEnrollmentCacheWithData(students []models.Student, courses []models.Course, enrollments []models.Enrollment) (*EnrollmentCache, error) {
 	cache := NewEnrollmentCache()
 	cache.loadInitStudents(students)
 	cache.loadInitCourses(courses)
 	cache.loadEnrollments(enrollments)
-	cache.buildConflictGraph(courses)
-	return cache
+	if err := cache.buildConflictGraph(courses); err != nil {
+		return nil, err
+	}
+	return cache, nil
 }
 
 func (cache *EnrollmentCache) loadInitStudents(students []models.Student) {
@@ -81,16 +83,23 @@ func (cache *EnrollmentCache) loadEnrollments(enrollments []models.Enrollment) {
 	}
 }
 
-func (cache *EnrollmentCache) buildConflictGraph(courses []models.Course) {
+func (cache *EnrollmentCache) buildConflictGraph(courses []models.Course) error {
 	cache.ConflictGraph = make(map[uint]map[uint]bool)
 	for i, course1 := range courses {
 		cache.ConflictGraph[course1.ID] = make(map[uint]bool)
 		for j, course2 := range courses {
-			if i != j && util.SchedulesConflict(course1.Schedules, course2.Schedules) {
-				cache.ConflictGraph[course1.ID][course2.ID] = true
+			if i != j {
+				conflict, err := util.SchedulesConflict(course1.Schedules, course2.Schedules)
+				if err != nil {
+					return fmt.Errorf("failed to check conflict between course %d and %d: %w", course1.ID, course2.ID, err)
+				}
+				if conflict {
+					cache.ConflictGraph[course1.ID][course2.ID] = true
+				}
 			}
 		}
 	}
+	return nil
 }
 
 // CourseExists checks if a course exists in cache
