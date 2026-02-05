@@ -17,6 +17,7 @@ type AdminService struct {
 	regConfigRepo repository.RegistrationConfigRepositoryInterface
 	enrollWorker  *worker.EnrollmentWorker
 	regState      *cache.RegistrationState
+	warmupFunc    func()
 }
 
 func NewAdminService(
@@ -26,6 +27,7 @@ func NewAdminService(
 	rcRepo repository.RegistrationConfigRepositoryInterface,
 	w *worker.EnrollmentWorker,
 	rs *cache.RegistrationState,
+	warmupFunc func(),
 ) *AdminService {
 	return &AdminService{
 		studentRepo:   s,
@@ -34,6 +36,7 @@ func NewAdminService(
 		regConfigRepo: rcRepo,
 		enrollWorker:  w,
 		regState:      rs,
+		warmupFunc:    warmupFunc,
 	}
 }
 
@@ -43,6 +46,10 @@ func (s *AdminService) GetRegistrationState() bool {
 
 func (s *AdminService) StartRegistration() error {
 	err := s.regState.ChangeEnabledAndAct(true, func() error {
+		// Warm up connection pool for login traffic surge
+		if s.warmupFunc != nil {
+			s.warmupFunc()
+		}
 
 		students, err := s.studentRepo.FetchAllStudents()
 		if err != nil {

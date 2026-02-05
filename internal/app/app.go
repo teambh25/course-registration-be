@@ -17,6 +17,7 @@ import (
 	"course-reg/internal/app/routers"
 	"course-reg/internal/app/service"
 	"course-reg/internal/pkg/database"
+	"course-reg/internal/pkg/setting"
 )
 
 // Application contains all application components and their dependencies
@@ -68,34 +69,29 @@ func NewApplication() (*Application, error) {
 		return nil, err
 	}
 
-	// Step 4: Setup worker
 	if err := app.setupWorker(); err != nil {
 		return nil, fmt.Errorf("worker setup failed: %w", err)
 	}
 
-	// Step 5: Setup registration state
-	if err := app.setupRegistrationState(); err != nil {
+	wasEnabled, err := app.setupRegistrationState()
+	if err != nil {
 		return nil, fmt.Errorf("registration state setup failed: %w", err)
 	}
 
-	// Step 6: Load data and start worker if registration is enabled
-	if err := app.initializeRegistrationIfEnabled(); err != nil {
-		return nil, fmt.Errorf("registration initialization failed: %w", err)
-	}
-
-	// Step 7: Setup services
 	if err := app.setupServices(); err != nil {
 		return nil, fmt.Errorf("service setup failed: %w", err)
 	}
 
-	// Step 8: Setup handlers
 	if err := app.setupHandlers(); err != nil {
 		return nil, fmt.Errorf("handler setup failed: %w", err)
 	}
 
-	// Step 9: Setup router
 	if err := app.setupRouter(); err != nil {
 		return nil, fmt.Errorf("router setup failed: %w", err)
+	}
+
+	if err := app.restoreRegistration(wasEnabled); err != nil {
+		return nil, fmt.Errorf("registration restore failed: %w", err)
 	}
 
 	return app, nil
@@ -143,12 +139,12 @@ func (app *Application) setupWorker() error {
 	return nil
 }
 
-// setupRegistrationState initializes the registration state
-func (app *Application) setupRegistrationState() error {
+// setupRegistrationState initializes the registration state (always disabled).
+// Returns whether registration was enabled in DB (for restoration after restart).
+func (app *Application) setupRegistrationState() (wasEnabled bool, err error) {
 	config, err := app.Repos.RegistrationConfig.GetConfig()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// 초기 레코드가 없으면 기본값으로 생성
 			config = &models.RegistrationConfig{
 				ID:        1,
 				Enabled:   false,
@@ -156,60 +152,44 @@ func (app *Application) setupRegistrationState() error {
 				EndTime:   "",
 			}
 			if err := app.Repos.RegistrationConfig.CreateConfig(config); err != nil {
-				return fmt.Errorf("failed to create initial registration config: %w", err)
+				return false, fmt.Errorf("failed to create initial registration config: %w", err)
 			}
 			log.Println("[info] created initial registration config")
 		} else {
-			return fmt.Errorf("failed to load registration config: %w", err)
+			return false, fmt.Errorf("failed to load registration config: %w", err)
 		}
 	}
-	app.RegState = cache.NewRegistrationState(config.Enabled, config.StartTime, config.EndTime)
-	log.Printf("[info] registration state setup completed (enabled: %v, start: %s, end: %s)",
+
+	// Always start with disabled state; restore later via StartRegistration
+	app.RegState = cache.NewRegistrationState(false, config.StartTime, config.EndTime)
+	log.Printf("[info] registration state setup completed (db_enabled: %v, start: %s, end: %s)",
 		config.Enabled, config.StartTime, config.EndTime)
-	return nil
+	return config.Enabled, nil
 }
 
-// initializeRegistrationIfEnabled loads data and starts worker if registration is enabled
-func (app *Application) initializeRegistrationIfEnabled() error {
-	if !app.RegState.IsEnabled() {
-		log.Println("[info] registration is disabled, skipping worker initialization")
+// restoreRegistration restores registration state if it was enabled before restart
+func (app *Application) restoreRegistration(wasEnabled bool) error {
+	if !wasEnabled {
+		log.Println("[info] registration was disabled, skipping restore")
 		return nil
 	}
 
-	log.Println("[info] registration is enabled, loading data and starting worker")
-
-	// Load students
-	students, err := app.Repos.Student.FetchAllStudents()
-	if err != nil {
-		return fmt.Errorf("failed to load students: %w", err)
+	log.Println("[info] restoring registration state from before restart")
+	if err := app.Services.Admin.StartRegistration(); err != nil {
+		return fmt.Errorf("failed to restore registration: %w", err)
 	}
-
-	// Load courses
-	courses, err := app.Repos.Course.FetchAllCourses()
-	if err != nil {
-		return fmt.Errorf("failed to load courses: %w", err)
-	}
-
-	// Load enrollments
-	enrollments, err := app.Repos.Enrollment.FetchAllEnrollments()
-	if err != nil {
-		return fmt.Errorf("failed to load enrollments: %w", err)
-	}
-
-	// Start worker with loaded data
-	if err := app.Worker.Start(students, courses, enrollments); err != nil {
-		return fmt.Errorf("failed to start worker: %w", err)
-	}
-
-	log.Println("[info] worker started with loaded data")
 	return nil
 }
 
 // setupServices initializes all services
 func (app *Application) setupServices() error {
+	warmupFunc := func() {
+		database.WarmupConnectionPool(app.DB, setting.DatabaseSetting.PoolSize)
+	}
+
 	app.Services = &Services{
 		Auth:      service.NewAuthService(app.Repos.Student),
-		Admin:     service.NewAdminService(app.Repos.Student, app.Repos.Course, app.Repos.Enrollment, app.Repos.RegistrationConfig, app.Worker, app.RegState),
+		Admin:     service.NewAdminService(app.Repos.Student, app.Repos.Course, app.Repos.Enrollment, app.Repos.RegistrationConfig, app.Worker, app.RegState, warmupFunc),
 		CourseReg: service.NewCourseRegService(app.Repos.Course, app.Repos.Enrollment, app.Worker, app.RegState),
 	}
 	log.Println("[info] services setup completed")

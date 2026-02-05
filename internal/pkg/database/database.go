@@ -1,9 +1,13 @@
 package database
 
 import (
-	"course-reg/internal/app/models"
+	"context"
 	"fmt"
+	"log"
+	"sync"
+	"time"
 
+	"course-reg/internal/app/models"
 	"course-reg/internal/pkg/setting"
 
 	"gorm.io/driver/postgres"
@@ -33,4 +37,30 @@ func Setup() (*gorm.DB, error) {
 	sqlDB.SetConnMaxLifetime(setting.DatabaseSetting.ConnMaxLifetime)
 	sqlDB.SetConnMaxIdleTime(setting.DatabaseSetting.ConnMaxIdleTime)
 	return db, nil
+}
+
+// WarmupConnectionPool pre-establishes database connections to avoid
+// connection creation latency during high-traffic periods (e.g., login surge at registration start)
+func WarmupConnectionPool(db *gorm.DB, poolSize int) {
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Printf("[warn] connection pool warmup failed to get sql.DB: %v", err)
+		return
+	}
+
+	// todo : ctx input으로 받기
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var wg sync.WaitGroup
+	for i := 0; i < poolSize; i++ {
+		wg.Go(func() {
+			if err := sqlDB.PingContext(ctx); err != nil {
+				log.Printf("[warn] connection pool warmup ping failed: %v", err)
+			}
+		})
+	}
+	wg.Wait()
+
+	log.Printf("[info] connection pool warmed up with %d connections", poolSize)
 }
