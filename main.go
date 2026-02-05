@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"course-reg/internal/app"
 	"course-reg/internal/pkg/setting"
@@ -43,38 +48,33 @@ func main() {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	log.Printf("[info] start http server listening %s", server.Addr)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("failed to start server: %v", err)
-	}
-
 	// Start server in a goroutine
-	// go func() {
-	// 	log.Printf("[info] start http server listening %s", server.Addr)
-	// 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-	// 		log.Fatalf("failed to start server: %v", err)
-	// 	}
-	// }()
+	go func() {
+		log.Printf("[info] start http server listening %s", server.Addr)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("failed to start server: %v", err)
+		}
+	}()
 
 	// Wait for interrupt signal to gracefully shutdown the server
-	// quit := make(chan os.Signal, 1)
-	// signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	// <-quit
-	// log.Println("[info] received shutdown signal")
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("[info] received shutdown signal")
 
 	// Create a deadline to wait for server shutdown
-	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // < Docker stop timeout (default: 10s)
-	// defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // < Docker stop timeout (default: 10s)
+	defer cancel()
 
 	// Shutdown HTTP server
-	// if err := server.Shutdown(ctx); err != nil {
-	// 	log.Printf("[error] server shutdown error: %v", err)
-	// }
+	if err := server.Shutdown(ctx); err != nil {
+		log.Printf("[error] server shutdown error: %v", err)
+	}
 
 	// Shutdown application (worker, database connections, etc.)
-	// if err := application.Shutdown(); err != nil {
-	// 	log.Printf("[error] application shutdown error: %v", err)
-	// }
+	if err := application.Shutdown(); err != nil {
+		log.Printf("[error] application shutdown error: %v", err)
+	}
 
-	// log.Println("[info] server exited")
+	log.Println("[info] server exited")
 }
