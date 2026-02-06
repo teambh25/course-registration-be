@@ -17,8 +17,7 @@ import (
 
 func Setup() (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.Open(setting.DatabaseSetting.URL), &gorm.Config{
-		PrepareStmt: true,
-		Logger:      logger.Default.LogMode(logger.Silent),
+		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect database: %w", err)
