@@ -75,7 +75,11 @@ if __name__ == "__main__":
 
     session = admin_login(args.url, args.admin_id, args.admin_pw)
 
-    pause_registration(args.url, session)
+    try:
+        pause_registration(args.url, session)
+    except Exception as e:
+        print(e)
+
     if args.reset:
         reset_data(args.url, session)
     register_studnet_data(args.url, session)

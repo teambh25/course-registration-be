@@ -1,3 +1,4 @@
+import time
 import json
 import logging
 import random
@@ -96,7 +97,7 @@ class Student(HttpUser):
                     break
 
         # 4. 모든 신청 완료 후 종료
-        raise StopUser()
+        time.sleep(999999)
 
     def login(self) -> bool:
         if not students:
@@ -126,7 +127,7 @@ class Student(HttpUser):
                     )
                 else:
                     response.failure(f"HTTP {response.status_code}")
-                    logging.error(f"Login failed: {response.status_code}")
+                    logging.error(f"Login failed: {response.status_code} | student: {student}")
                     return False
 
         logging.error(f"Login failed after {max_retries} attempts")
