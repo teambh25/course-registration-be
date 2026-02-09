@@ -53,6 +53,16 @@ func enrollResultToHTTPStatus(r worker.EnrollmentResult) int {
 	}
 }
 
+func (h *CourseRegHandler) GetAllCourseStatus(c *gin.Context) {
+	result, err := h.courseRegService.GetAllCourseStatus()
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
 // func (h *CourseRegHandler) CancelEnrollment(c *gin.Context) {
 // 	studentID := uint(1)
 

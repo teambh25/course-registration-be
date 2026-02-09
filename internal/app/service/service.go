@@ -29,5 +29,6 @@ type AuthServiceInterface interface {
 
 type CourseRegServiceInterface interface {
 	Enroll(studentID, courseID uint) worker.EnrollmentResult
+	GetAllCourseStatus() (map[uint]constant.CourseStatus, error)
 	// CancelEnrollment(studentID, courseID uint) (success bool, message string, allSeats map[uint]int)
 }
