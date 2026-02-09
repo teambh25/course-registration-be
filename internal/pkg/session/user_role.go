@@ -1,4 +1,4 @@
-package constant
+package session
 
 type UserRole int // todo: string으로 바꾸기?
 

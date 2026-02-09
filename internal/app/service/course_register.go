@@ -4,7 +4,6 @@ import (
 	"course-reg/internal/app/domain/cache"
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/repository"
-	"course-reg/internal/pkg/constant"
 )
 
 type CourseRegService struct {
@@ -43,8 +42,8 @@ func (s *CourseRegService) Enroll(studentID, courseID uint) worker.EnrollmentRes
 	return result
 }
 
-func (s *CourseRegService) GetAllCourseStatus() (map[uint]constant.CourseStatus, error) {
-	var result map[uint]constant.CourseStatus
+func (s *CourseRegService) GetAllCourseStatus() (map[uint]worker.CourseStatus, error) {
+	var result map[uint]worker.CourseStatus
 
 	err := s.regState.RunIfEnabled(true, func() error {
 		result = s.enrollmentWorker.GetAllCourseStatus()

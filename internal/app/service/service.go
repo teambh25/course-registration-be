@@ -3,7 +3,7 @@ package service
 import (
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/models"
-	"course-reg/internal/pkg/constant"
+	"course-reg/internal/pkg/session"
 )
 
 type AdminServiceInterface interface {
@@ -24,11 +24,11 @@ type AdminServiceInterface interface {
 }
 
 type AuthServiceInterface interface {
-	Check(username string, password string) (constant.UserRole, uint, error)
+	Check(username string, password string) (session.UserRole, uint, error)
 }
 
 type CourseRegServiceInterface interface {
 	Enroll(studentID, courseID uint) worker.EnrollmentResult
-	GetAllCourseStatus() (map[uint]constant.CourseStatus, error)
+	GetAllCourseStatus() (map[uint]worker.CourseStatus, error)
 	// CancelEnrollment(studentID, courseID uint) (success bool, message string, allSeats map[uint]int)
 }

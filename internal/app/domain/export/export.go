@@ -2,8 +2,8 @@ package export
 
 import (
 	"course-reg/internal/app/repository"
-	"course-reg/internal/pkg/constant"
 	"course-reg/internal/pkg/file"
+	"course-reg/internal/pkg/setting"
 	"log"
 	"sync"
 )
@@ -20,12 +20,12 @@ func ExportCoursesToJson(courseRepo repository.CourseRepositoryInterface) error 
 		return err
 	}
 
-	err = file.SaveJSON(constant.StaticCoursesFilePath, courses)
+	err = file.SaveJSON(setting.AppSetting.StaticCoursesFilePath, courses)
 	if err != nil {
 		log.Println("[error] save JSON failed:", err.Error())
 		return err
 	}
 
-	log.Printf("[info] Successfully exported %d courses to %s", len(courses), constant.StaticCoursesFilePath)
+	log.Printf("[info] Successfully exported %d courses to %s", len(courses), setting.AppSetting.StaticCoursesFilePath)
 	return nil
 }

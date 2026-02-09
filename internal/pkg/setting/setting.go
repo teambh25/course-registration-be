@@ -10,10 +10,11 @@ import (
 )
 
 type App struct {
-	LogSavePath string
-	LogSaveName string
-	LogFileExt  string
-	TimeFormat  string
+	LogSavePath          string
+	LogSaveName          string
+	LogFileExt           string
+	TimeFormat           string
+	StaticCoursesFilePath string
 }
 
 var AppSetting = &App{}
@@ -54,6 +55,7 @@ func Setup() {
 	AppSetting.LogSaveName = getEnvRequired("APP_LOG_SAVE_NAME")
 	AppSetting.LogFileExt = getEnvRequired("APP_LOG_FILE_EXT")
 	AppSetting.TimeFormat = getEnvRequired("APP_TIME_FORMAT")
+	AppSetting.StaticCoursesFilePath = getEnvRequired("APP_STATIC_COURSES_FILE_PATH")
 
 	// Server settings
 	ServerSetting.RunMode = getEnvRequired("SERVER_RUN_MODE")

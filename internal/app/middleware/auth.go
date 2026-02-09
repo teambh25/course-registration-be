@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"course-reg/internal/pkg/constant"
 	"course-reg/internal/pkg/session"
 	"net/http"
 
@@ -21,7 +20,7 @@ func AuthUser() gin.HandlerFunc {
 func AuthAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role, _, err := session.GetSession(c)
-		if err != nil || role != constant.RoleAdmin {
+		if err != nil || role != session.RoleAdmin {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		}
 		c.Next()
@@ -31,7 +30,7 @@ func AuthAdmin() gin.HandlerFunc {
 func AuthStudent() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role, userID, err := session.GetSession(c)
-		if err != nil || role != constant.RoleStudent {
+		if err != nil || role != session.RoleStudent {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		}
 		c.Set("studentID", userID)

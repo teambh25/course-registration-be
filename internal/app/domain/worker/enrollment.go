@@ -17,16 +17,6 @@ type EnrollmentWorker struct {
 	enrollRepo  repository.EnrollmentRepositoryInterface
 }
 
-type RequestType int
-
-const (
-	ENROLL RequestType = iota + 1
-	CANCEL
-	READ_ALL
-	ADMIN_ENROLL
-	ADMIN_CANCEL
-)
-
 // EnrollmentResult represents the result of an enrollment operation
 type EnrollmentResult int
 
@@ -163,6 +153,20 @@ func (w *EnrollmentWorker) processEnroll(req EnrollmentRequest) EnrollmentResult
 	w.cache.EnrollStudent(studentID, courseID)
 
 	return EnrollSuccess
+}
+
+func (w *EnrollmentWorker) GetAllCourseStatus() map[uint]CourseStatus {
+	status := make(map[uint]CourseStatus)
+	for courseID, info := range w.cache.GetAllCourseCountInfo() {
+		if info.EnrolledCount < info.Capacity {
+			status[courseID] = CourseAvailable
+		} else if info.WaitingCount < info.Capacity {
+			status[courseID] = CourseWaitlist
+		} else {
+			status[courseID] = CourseFull
+		}
+	}
+	return status
 }
 
 func (w *EnrollmentWorker) processAddWaitList() {

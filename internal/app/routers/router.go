@@ -7,7 +7,6 @@ import (
 
 	"course-reg/internal/app/handler"
 	"course-reg/internal/app/middleware"
-	"course-reg/internal/pkg/constant"
 	"course-reg/internal/pkg/setting"
 )
 
@@ -39,7 +38,7 @@ func InitRouter(
 		}
 
 		admin := v1.Group("/admin")
-		// admin.Use(middleware.AuthAdmin())
+		admin.Use(middleware.AuthAdmin())
 		{
 			admin.GET("/registration/state", adminHandler.GetRegistrationState)
 			admin.POST("/registration/start", adminHandler.StartRegistration)
@@ -71,7 +70,7 @@ func InitRouter(
 		user := v1.Group("/courses")
 		user.Use(middleware.AuthUser())
 		{
-			user.StaticFile("/", constant.StaticCoursesFilePath)
+			user.StaticFile("/", setting.AppSetting.StaticCoursesFilePath)
 			user.GET("/status", courseRegHandler.GetAllCourseStatus)
 			// user.GET("/enrollments", courseRegHandler.GetCoursesCapacityStatus)
 

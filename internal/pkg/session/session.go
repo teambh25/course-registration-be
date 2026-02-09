@@ -1,7 +1,6 @@
 package session
 
 import (
-	"course-reg/internal/pkg/constant"
 	"fmt"
 	"net/http"
 
@@ -9,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetSession(c *gin.Context) (constant.UserRole, uint, error) {
+func GetSession(c *gin.Context) (UserRole, uint, error) {
 	session := sessions.Default(c)
 	roleInt, ok := session.Get("role").(int)
 	if !ok {
@@ -21,10 +20,10 @@ func GetSession(c *gin.Context) (constant.UserRole, uint, error) {
 		return 0, 0, fmt.Errorf("get user id failed")
 	}
 
-	return constant.UserRole(roleInt), userID, nil
+	return UserRole(roleInt), userID, nil
 }
 
-func SetSession(c *gin.Context, role constant.UserRole, userID uint) error {
+func SetSession(c *gin.Context, role UserRole, userID uint) error {
 	session := sessions.Default(c)
 	session.Set("role", int(role))
 	session.Set("userID", userID)
