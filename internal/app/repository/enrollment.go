@@ -23,6 +23,14 @@ func (r *EnrollmentRepository) InsertEnrollment(enrollment *models.Enrollment) e
 	return nil
 }
 
+func (r *EnrollmentRepository) BatchInsertEnrollments(enrollments []models.Enrollment) error {
+	result := r.db.Create(&enrollments)
+	if result.Error != nil {
+		return fmt.Errorf("batch create failed: %w", result.Error)
+	}
+	return nil
+}
+
 func (r *EnrollmentRepository) DeleteEnrollment(studentID uint, courseID uint) error {
 	result := r.db.Where("student_id = ? AND course_id = ?", studentID, courseID).Delete(&models.Enrollment{})
 	if result.Error != nil {

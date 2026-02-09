@@ -27,13 +27,11 @@ func (r *StudentRepository) FetchPassword(username string) (uint, string, error)
 	return student.ID, student.BirthDate, nil
 }
 
-func (r *StudentRepository) BulkInsertStudents(students []models.Student) error {
-	tx := r.db.Begin()
-	if err := tx.CreateInBatches(students, studentBatchSize).Error; err != nil {
-		tx.Rollback()
+func (r *StudentRepository) BatchInsertStudents(students []models.Student) error {
+	// CreateInBatches runs within an internal transaction and automatically rolls back on failure.
+	if err := r.db.CreateInBatches(students, studentBatchSize).Error; err != nil {
 		return fmt.Errorf("create in batches failed: %w", err)
 	}
-	tx.Commit()
 	return nil
 }
 

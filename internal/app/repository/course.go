@@ -17,13 +17,11 @@ func NewCourseRepository(db *gorm.DB) *CourseRepository {
 	return &CourseRepository{db: db}
 }
 
-func (r *CourseRepository) BulkInsertCourses(courses []models.Course) error {
-	tx := r.db.Begin()
-	if err := tx.CreateInBatches(courses, courseBatchSize).Error; err != nil {
-		tx.Rollback()
+func (r *CourseRepository) BatchInsertCourses(courses []models.Course) error {
+	// CreateInBatches runs within an internal transaction and automatically rolls back on failure.
+	if err := r.db.CreateInBatches(courses, courseBatchSize).Error; err != nil {
 		return fmt.Errorf("create in batches failed: %w", err)
 	}
-	tx.Commit()
 	return nil
 }
 

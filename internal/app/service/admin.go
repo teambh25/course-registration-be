@@ -141,7 +141,7 @@ func (s *AdminService) SetRegistrationPeriod(startTime, endTime string) error {
 
 func (s *AdminService) RegisterStudents(students []models.Student) error {
 	err := s.regState.RunIfEnabled(false, func() error {
-		return s.studentRepo.BulkInsertStudents(students)
+		return s.studentRepo.BatchInsertStudents(students)
 	})
 	if err != nil {
 		log.Println("register students failed:", err.Error())
@@ -193,7 +193,7 @@ func (s *AdminService) RegisterCourses(courses []models.Course) error {
 	// todo: shcedule에 대한 validation?
 
 	err := s.regState.RunIfEnabled(false, func() error {
-		return s.courseRepo.BulkInsertCourses(courses)
+		return s.courseRepo.BatchInsertCourses(courses)
 	})
 	if err != nil {
 		log.Println("register courses failed:", err.Error())
