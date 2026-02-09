@@ -2,6 +2,8 @@ package service
 
 import (
 	"course-reg/internal/app/domain/cache"
+	"course-reg/internal/app/domain/constants"
+	"course-reg/internal/app/domain/e"
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/repository"
 )
@@ -9,14 +11,14 @@ import (
 type CourseRegService struct {
 	courseRepo       repository.CourseRepositoryInterface
 	enrollRepo       repository.EnrollmentRepositoryInterface
-	enrollmentWorker *worker.EnrollmentWorker
+	enrollmentWorker *worker.Worker
 	regState         *cache.RegistrationState
 }
 
 func NewCourseRegService(
 	c repository.CourseRepositoryInterface,
 	e repository.EnrollmentRepositoryInterface,
-	w *worker.EnrollmentWorker,
+	w *worker.Worker,
 	r *cache.RegistrationState,
 ) *CourseRegService {
 	return &CourseRegService{
@@ -42,8 +44,8 @@ func (s *CourseRegService) Enroll(studentID, courseID uint) worker.EnrollmentRes
 	return result
 }
 
-func (s *CourseRegService) GetAllCourseStatus() (map[uint]worker.CourseStatus, error) {
-	var result map[uint]worker.CourseStatus
+func (s *CourseRegService) GetAllCourseStatus() (map[uint]constants.CourseStatus, error) {
+	var result map[uint]constants.CourseStatus
 
 	err := s.regState.RunIfEnabled(true, func() error {
 		result = s.enrollmentWorker.GetAllCourseStatus()

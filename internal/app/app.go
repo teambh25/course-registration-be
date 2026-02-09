@@ -23,7 +23,7 @@ import (
 // Application contains all application components and their dependencies
 type Application struct {
 	DB       *gorm.DB
-	Worker   *worker.EnrollmentWorker
+	Worker   *worker.Worker
 	RegState *cache.RegistrationState
 	Router   *gin.Engine
 }
@@ -165,7 +165,7 @@ type services struct {
 	CourseReg service.CourseRegServiceInterface
 }
 
-func newServices(repos *repositories, w *worker.EnrollmentWorker, rs *cache.RegistrationState, warmupFunc func()) *services {
+func newServices(repos *repositories, w *worker.Worker, rs *cache.RegistrationState, warmupFunc func()) *services {
 	return &services{
 		Auth:      service.NewAuthService(repos.Student),
 		Admin:     service.NewAdminService(repos.Student, repos.Course, repos.Enrollment, repos.RegistrationConfig, w, rs, warmupFunc),

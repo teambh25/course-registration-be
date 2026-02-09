@@ -1,4 +1,4 @@
-package worker
+package constants
 
 type CourseStatus string
 

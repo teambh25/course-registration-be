@@ -15,7 +15,7 @@ type AdminService struct {
 	courseRepo    repository.CourseRepositoryInterface
 	enrollRepo    repository.EnrollmentRepositoryInterface
 	regConfigRepo repository.RegistrationConfigRepositoryInterface
-	enrollWorker  *worker.EnrollmentWorker
+	enrollWorker  *worker.Worker
 	regState      *cache.RegistrationState
 	warmupFunc    func()
 }
@@ -25,7 +25,7 @@ func NewAdminService(
 	c repository.CourseRepositoryInterface,
 	e repository.EnrollmentRepositoryInterface,
 	rcRepo repository.RegistrationConfigRepositoryInterface,
-	w *worker.EnrollmentWorker,
+	w *worker.Worker,
 	rs *cache.RegistrationState,
 	warmupFunc func(),
 ) *AdminService {
