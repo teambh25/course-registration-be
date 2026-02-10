@@ -3,7 +3,6 @@ package service
 import (
 	"course-reg/internal/app/domain/cache"
 	"course-reg/internal/app/domain/constants"
-	"course-reg/internal/app/domain/e"
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/repository"
 )
@@ -29,29 +28,18 @@ func NewCourseRegService(
 	}
 }
 
-func (s *CourseRegService) Enroll(studentID, courseID uint) worker.EnrollmentResult {
-	var result worker.EnrollmentResult
-
-	err := s.regState.RunIfEnabled(true, func() error {
-		result = s.enrollmentWorker.Enroll(studentID, courseID)
-		return nil
+func (s *CourseRegService) Enroll(studentID, courseID uint) error {
+	return s.regState.RunIfEnabled(true, func() error {
+		return s.enrollmentWorker.Enroll(studentID, courseID)
 	})
-
-	if err != nil {
-		return worker.EnrollNotInPeriod
-	}
-
-	return result
 }
 
 func (s *CourseRegService) GetAllCourseStatus() (map[uint]constants.CourseStatus, error) {
 	var result map[uint]constants.CourseStatus
-
 	err := s.regState.RunIfEnabled(true, func() error {
 		result = s.enrollmentWorker.GetAllCourseStatus()
 		return nil
 	})
-
 	return result, err
 }
 

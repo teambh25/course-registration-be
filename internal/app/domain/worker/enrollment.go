@@ -2,67 +2,29 @@ package worker
 
 import (
 	"course-reg/internal/app/domain/cache"
+	"course-reg/internal/app/domain/constants"
+	"course-reg/internal/app/domain/e"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
 	"errors"
-	"sync"
 )
-
-// EnrollmentWorker handles enrollment operations with cache
-type EnrollmentWorker struct {
-	wg          sync.WaitGroup
-	queueSize   int
-	requestChan chan EnrollmentRequest
-	cache       *cache.EnrollmentCache
-	enrollRepo  repository.EnrollmentRepositoryInterface
-}
-
-// EnrollmentResult represents the result of an enrollment operation
-type EnrollmentResult int
-
-const (
-	EnrollSuccess EnrollmentResult = iota
-	EnrollCourseNotFound
-	EnrollStudentNotFound
-	EnrollTimeConflict
-	EnrollAlreadyEnrolled
-	EnrollCourseFull
-	EnrollNotInPeriod
-)
-
-var enrollResultMessages = map[EnrollmentResult]string{
-	EnrollSuccess:         "수강신청 성공",
-	EnrollCourseNotFound:  "존재하지 않는 강의입니다",
-	EnrollStudentNotFound: "존재하지 않는 학생입니다",
-	EnrollTimeConflict:    "시간이 겹치는 강의가 있습니다",
-	EnrollAlreadyEnrolled: "이미 신청한 강의입니다",
-	EnrollCourseFull:      "정원이 초과 되었습니다",
-	EnrollNotInPeriod:     "수강신청 기간이 아닙니다",
-}
-
-func (r EnrollmentResult) String() string {
-	if msg, ok := enrollResultMessages[r]; ok {
-		return msg
-	}
-	return "알 수 없는 오류"
-}
 
 // EnrollmentRequest represents an enrollment request
 type EnrollmentRequest struct {
 	Type      RequestType
 	StudentID uint
 	CourseID  uint
-	Response  chan EnrollmentResult
+	Response  chan error
 }
 
-func NewEnrollmentWorker(queueSize int, enrollRepo repository.EnrollmentRepositoryInterface) *EnrollmentWorker {
-	return &EnrollmentWorker{
+func NewEnrollmentWorker(queueSize int, enrollRepo repository.EnrollmentRepositoryInterface) *Worker {
+	return &Worker{
 		queueSize:  queueSize,
 		enrollRepo: enrollRepo,
 	}
 }
 
-func (w *EnrollmentWorker) Start(students []models.Student, courses []models.Course, enrollments []models.Enrollment) error {
+func (w *Worker) Start(students []models.Student, courses []models.Course, enrollments []models.Enrollment) error {
 	if w.requestChan != nil {
 		return errors.New("worker already running")
 	}
@@ -84,37 +46,31 @@ func (w *EnrollmentWorker) Start(students []models.Student, courses []models.Cou
 	return nil
 }
 
-func (w *EnrollmentWorker) Stop() {
+func (w *Worker) Stop() {
 	close(w.requestChan)
 	w.wg.Wait()
 	w.requestChan = nil
 }
 
-func (w *EnrollmentWorker) worker() {
+func (w *Worker) worker() {
 	for req := range w.requestChan {
-		var result EnrollmentResult
+		var err error
 
 		switch req.Type {
 		case ENROLL:
-			result = w.processEnroll(req)
-			// case READ_ALL:
-			// 	result = w.processReadAll()
-			// case CANCEL:
-			// 	result = w.processCancel(req)
-			// case ADMIN_ENROLL:
-			// 	result = w.processAdminEnroll(req)
+			err = w.processEnroll(req)
 		}
 
-		req.Response <- result
+		req.Response <- err
 	}
 }
 
-func (w *EnrollmentWorker) Enroll(studentID, courseID uint) EnrollmentResult {
+func (w *Worker) Enroll(studentID, courseID uint) error {
 	req := EnrollmentRequest{
 		Type:      ENROLL,
 		StudentID: studentID,
 		CourseID:  courseID,
-		Response:  make(chan EnrollmentResult, 1),
+		Response:  make(chan error, 1),
 	}
 
 	w.requestChan <- req
@@ -122,54 +78,52 @@ func (w *EnrollmentWorker) Enroll(studentID, courseID uint) EnrollmentResult {
 }
 
 // processEnroll handles enrollment logic
-func (w *EnrollmentWorker) processEnroll(req EnrollmentRequest) EnrollmentResult {
+func (w *Worker) processEnroll(req EnrollmentRequest) error {
 	studentID := req.StudentID
 	courseID := req.CourseID
 
-	// Todo : validate handler쪽으로 옮기기
 	if !w.cache.CourseExists(courseID) {
-		return EnrollCourseNotFound
+		return e.ErrCourseNotFound
 	}
 
-	// Todo : 500 에러 처리
 	if !w.cache.StudentExists(studentID) {
-		return EnrollStudentNotFound
+		return e.ErrStudentNotFound
 	}
 
 	if w.cache.HasTimeConflict(studentID, courseID) {
-		return EnrollTimeConflict
+		return e.ErrTimeConflict
 	}
 
 	if w.cache.IsStudentEnrolled(studentID, courseID) {
-		return EnrollAlreadyEnrolled
+		return e.ErrAlreadyEnrolled
 	}
 
 	pos, err := w.cache.GetPosIfNotFull(courseID)
 	if err != nil {
-		return EnrollCourseFull
+		return e.ErrCourseFull
 	}
 
 	w.enrollRepo.InsertEnrollment(&models.Enrollment{StudentID: studentID, CourseID: courseID, Position: pos})
 	w.cache.EnrollStudent(studentID, courseID)
 
-	return EnrollSuccess
+	return nil
 }
 
-func (w *EnrollmentWorker) GetAllCourseStatus() map[uint]CourseStatus {
-	status := make(map[uint]CourseStatus)
+func (w *Worker) GetAllCourseStatus() map[uint]constants.CourseStatus {
+	status := make(map[uint]constants.CourseStatus)
 	for courseID, info := range w.cache.GetAllCourseCountInfo() {
 		if info.EnrolledCount < info.Capacity {
-			status[courseID] = CourseAvailable
+			status[courseID] = constants.CourseAvailable
 		} else if info.WaitingCount < info.Capacity {
-			status[courseID] = CourseWaitlist
+			status[courseID] = constants.CourseWaitlist
 		} else {
-			status[courseID] = CourseFull
+			status[courseID] = constants.CourseFull
 		}
 	}
 	return status
 }
 
-func (w *EnrollmentWorker) processAddWaitList() {
+func (w *Worker) processAddWaitList() {
 	// isWaitlistFull, err := w.cache.IsWaitlistFull(courseID)
 	// if err != nil {
 	// 	return EnrollmentResponse{

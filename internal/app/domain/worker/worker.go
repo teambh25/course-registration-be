@@ -6,13 +6,13 @@ import (
 	"sync"
 )
 
+// Worker handles enrollment operations with cache
 type Worker struct {
-	wg           sync.WaitGroup
-	queueSize    int
-	maxBatchSize int
-	requestChan  chan EnrollmentRequest
-	cache        *cache.EnrollmentCache
-	enrollRepo   repository.EnrollmentRepositoryInterface
+	wg          sync.WaitGroup
+	queueSize   int
+	requestChan chan EnrollmentRequest
+	cache       *cache.EnrollmentCache
+	enrollRepo  repository.EnrollmentRepositoryInterface
 }
 
 type RequestType int

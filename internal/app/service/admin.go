@@ -85,7 +85,7 @@ func (s *AdminService) StartRegistration() error {
 	if err != nil {
 		log.Println(err)
 	} else {
-		log.Println("Start Registration!!!")
+		log.Println("[info] Start Registration!!!")
 	}
 
 	return err

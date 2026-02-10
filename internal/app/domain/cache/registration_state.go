@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"course-reg/internal/app/domain/e"
 	"course-reg/internal/pkg/utils"
 	"fmt"
 	"sync"
@@ -49,13 +50,13 @@ func (rs *RegistrationState) RunIfEnabled(enabled bool, act func() error) error 
 	if rs.mu.TryRLock() {
 		defer rs.mu.RUnlock()
 		if rs.enabled != enabled {
-			return fmt.Errorf("enabled is not %v", enabled)
+			return fmt.Errorf("registration enabled is %v, expected %v: %w", rs.enabled, enabled, e.ErrInvalidRegistrationPeriod)
 		}
 		if err := act(); err != nil {
 			return err
 		}
 	} else {
-		return fmt.Errorf("registration is setting up")
+		return fmt.Errorf("registration state is being modified: %w", e.ErrInvalidRegistrationPeriod)
 	}
 	return nil
 }
