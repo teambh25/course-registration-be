@@ -15,5 +15,6 @@ var (
 	ErrTimeConflict              = errors.New("time conflict with enrolled course")
 	ErrAlreadyEnrolled           = errors.New("already enrolled in this course")
 	ErrCourseFull                = errors.New("course is full")
+	ErrEnrollmentDBFailed        = errors.New("failed to save enrollment")
 	ErrInvalidRegistrationPeriod = errors.New("not within registration period")
 )

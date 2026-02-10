@@ -6,6 +6,7 @@ import (
 	"course-reg/internal/app/domain/e"
 	"course-reg/internal/app/models"
 	"errors"
+	"fmt"
 )
 
 // EnrollmentRequest represents an enrollment request
@@ -95,7 +96,9 @@ func (w *EnrollmentWorker) processEnroll(req EnrollmentRequest) error {
 		return e.ErrCourseFull
 	}
 
-	w.enrollRepo.InsertEnrollment(&models.Enrollment{StudentID: studentID, CourseID: courseID, Position: pos})
+	if err := w.enrollRepo.InsertEnrollment(&models.Enrollment{StudentID: studentID, CourseID: courseID, Position: pos}); err != nil {
+		return fmt.Errorf("%w: %v", e.ErrEnrollmentDBFailed, err)
+	}
 	w.cache.EnrollStudent(studentID, courseID)
 
 	return nil
