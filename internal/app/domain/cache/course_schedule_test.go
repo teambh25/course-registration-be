@@ -1,27 +1,27 @@
-package utils
+package cache
 
 import (
 	"testing"
 )
 
-func TestParseSchedule(t *testing.T) {
+func TestParseCourseSchedule(t *testing.T) {
 	t.Run("valid cases", func(t *testing.T) {
 		tests := []struct {
 			name     string
 			input    string
-			expected []TimeSlot
+			expected []courseTime
 		}{
 			{
 				name:  "single schedule",
 				input: "월 09:10~11:30",
-				expected: []TimeSlot{
+				expected: []courseTime{
 					{Day: "월", StartHour: 9, StartMin: 10, EndHour: 11, EndMin: 30},
 				},
 			},
 			{
 				name:  "multiple schedules",
 				input: "월 09:10~11:30, 수 17:10~19:20",
-				expected: []TimeSlot{
+				expected: []courseTime{
 					{Day: "월", StartHour: 9, StartMin: 10, EndHour: 11, EndMin: 30},
 					{Day: "수", StartHour: 17, StartMin: 10, EndHour: 19, EndMin: 20},
 				},
@@ -29,7 +29,7 @@ func TestParseSchedule(t *testing.T) {
 			{
 				name:  "all days",
 				input: "월 09:00~10:00, 화 09:00~10:00, 수 09:00~10:00, 목 09:00~10:00, 금 09:00~10:00, 토 09:00~10:00, 일 09:00~10:00",
-				expected: []TimeSlot{
+				expected: []courseTime{
 					{Day: "월", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
 					{Day: "화", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
 					{Day: "수", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
@@ -43,7 +43,7 @@ func TestParseSchedule(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result, err := ParseSchedule(tt.input)
+				result, err := parseCourseSchedule(tt.input)
 				if err != nil {
 					t.Fatalf("unexpected error: %v", err)
 				}
@@ -95,7 +95,7 @@ func TestParseSchedule(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				_, err := ParseSchedule(tt.input)
+				_, err := parseCourseSchedule(tt.input)
 				if err == nil {
 					t.Errorf("expected error for input %q, got nil", tt.input)
 				}
@@ -104,48 +104,48 @@ func TestParseSchedule(t *testing.T) {
 	})
 }
 
-func TestHasConflict(t *testing.T) {
+func TestHasCourseTimeConflict(t *testing.T) {
 	tests := []struct {
 		name     string
-		slot1    TimeSlot
-		slot2    TimeSlot
+		slot1    courseTime
+		slot2    courseTime
 		expected bool
 	}{
 		{
 			name:     "different days - no conflict",
-			slot1:    TimeSlot{Day: "월", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
-			slot2:    TimeSlot{Day: "화", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
+			slot1:    courseTime{Day: "월", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
+			slot2:    courseTime{Day: "화", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
 			expected: false,
 		},
 		{
 			name:     "same day - full overlap",
-			slot1:    TimeSlot{Day: "월", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
-			slot2:    TimeSlot{Day: "월", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
+			slot1:    courseTime{Day: "월", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
+			slot2:    courseTime{Day: "월", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
 			expected: true,
 		},
 		{
 			name:     "same day - partial overlap",
-			slot1:    TimeSlot{Day: "월", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 30},
-			slot2:    TimeSlot{Day: "월", StartHour: 10, StartMin: 0, EndHour: 11, EndMin: 0},
+			slot1:    courseTime{Day: "월", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 30},
+			slot2:    courseTime{Day: "월", StartHour: 10, StartMin: 0, EndHour: 11, EndMin: 0},
 			expected: true,
 		},
 		{
 			name:     "same day - consecutive (no overlap)",
-			slot1:    TimeSlot{Day: "월", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
-			slot2:    TimeSlot{Day: "월", StartHour: 10, StartMin: 0, EndHour: 11, EndMin: 0},
+			slot1:    courseTime{Day: "월", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
+			slot2:    courseTime{Day: "월", StartHour: 10, StartMin: 0, EndHour: 11, EndMin: 0},
 			expected: false,
 		},
 		{
 			name:     "same day - separated",
-			slot1:    TimeSlot{Day: "월", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
-			slot2:    TimeSlot{Day: "월", StartHour: 14, StartMin: 0, EndHour: 15, EndMin: 0},
+			slot1:    courseTime{Day: "월", StartHour: 9, StartMin: 0, EndHour: 10, EndMin: 0},
+			slot2:    courseTime{Day: "월", StartHour: 14, StartMin: 0, EndHour: 15, EndMin: 0},
 			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := HasConflict(tt.slot1, tt.slot2)
+			result := hasCourseTimeConflict(tt.slot1, tt.slot2)
 			if result != tt.expected {
 				t.Errorf("got %v, want %v", result, tt.expected)
 			}
@@ -153,7 +153,7 @@ func TestHasConflict(t *testing.T) {
 	}
 }
 
-func TestSchedulesConflict(t *testing.T) {
+func TestHasCourseScheduleConflict(t *testing.T) {
 	t.Run("valid cases", func(t *testing.T) {
 		tests := []struct {
 			name      string
@@ -189,7 +189,7 @@ func TestSchedulesConflict(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result, err := SchedulesConflict(tt.schedule1, tt.schedule2)
+				result, err := hasCourseScheduleConflict(tt.schedule1, tt.schedule2)
 				if err != nil {
 					t.Fatalf("unexpected error: %v", err)
 				}
@@ -220,7 +220,7 @@ func TestSchedulesConflict(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				_, err := SchedulesConflict(tt.schedule1, tt.schedule2)
+				_, err := hasCourseScheduleConflict(tt.schedule1, tt.schedule2)
 				if err == nil {
 					t.Errorf("expected error, got nil")
 				}

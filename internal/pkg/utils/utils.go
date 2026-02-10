@@ -1,14 +1,22 @@
 package utils
 
-import (
-	"time"
+import "time"
 
-	"github.com/google/uuid"
-)
+// TimeProvider provides current time (for dependency injection and testing)
+type TimeProvider interface {
+	Now() time.Time
+}
 
-func GenerateSessionID() string {
-	newUUID := uuid.New()
-	return newUUID.String()
+// KoreaTimeProvider returns current time in Korea timezone
+type KoreaTimeProvider struct{}
+
+func NewKoreaTimeProvider() *KoreaTimeProvider {
+	return &KoreaTimeProvider{}
+}
+
+func (p *KoreaTimeProvider) Now() time.Time {
+	loc, _ := time.LoadLocation("Asia/Seoul")
+	return time.Now().In(loc)
 }
 
 func StringToTime(timeStr string) (time.Time, error) {

@@ -2,7 +2,6 @@ package cache
 
 import (
 	"course-reg/internal/app/models"
-	util "course-reg/internal/pkg/utils"
 	"errors"
 	"fmt"
 	"sync/atomic"
@@ -83,7 +82,7 @@ func (cache *EnrollmentCache) buildConflictGraph(courses []models.Course) error 
 		cache.ConflictGraph[course1.ID] = make(map[uint]bool)
 		for j, course2 := range courses {
 			if i != j {
-				conflict, err := util.SchedulesConflict(course1.Schedules, course2.Schedules)
+				conflict, err := hasCourseScheduleConflict(course1.Schedules, course2.Schedules)
 				if err != nil {
 					return fmt.Errorf("failed to check conflict between course %d and %d: %w", course1.ID, course2.ID, err)
 				}

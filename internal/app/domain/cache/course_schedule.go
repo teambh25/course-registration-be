@@ -1,4 +1,4 @@
-package utils
+package cache
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// TimeSlot represents a single time slot (day + start-end time)
-type TimeSlot struct {
+// courseTime represents a single time slot (day + start-end time)
+type courseTime struct {
 	Day       string // "월", "화", "수", "목", "금", "토", "일"
 	StartHour int    //
 	StartMin  int    //
@@ -15,14 +15,14 @@ type TimeSlot struct {
 	EndMin    int    //
 }
 
-// ParseSchedule parses schedule string like "월 09:10~11:30, 수 17:10~19:20"
+// parseCourseSchedule parses schedule string like "월 09:10~11:30, 수 17:10~19:20"
 // Format is fixed: "요일 HH:MM~HH:MM" (15 bytes: 한글 3 + 공백 1 + 시간 11)
-func ParseSchedule(schedules string) ([]TimeSlot, error) {
+func parseCourseSchedule(schedules string) ([]courseTime, error) {
 	if schedules == "" {
 		return nil, fmt.Errorf("empty schedule string")
 	}
 
-	var slots []TimeSlot
+	var slots []courseTime
 	parts := strings.Split(schedules, ",")
 
 	for _, part := range parts {
@@ -50,7 +50,7 @@ func ParseSchedule(schedules string) ([]TimeSlot, error) {
 			return nil, fmt.Errorf("failed to parse end minute: %q", part[13:15])
 		}
 
-		slots = append(slots, TimeSlot{
+		slots = append(slots, courseTime{
 			Day:       day,
 			StartHour: startHour,
 			StartMin:  startMin,
@@ -62,8 +62,8 @@ func ParseSchedule(schedules string) ([]TimeSlot, error) {
 	return slots, nil
 }
 
-// HasConflict checks if two time slots conflict
-func HasConflict(slot1, slot2 TimeSlot) bool {
+// hasCourseTimeConflict checks if two time slots conflict
+func hasCourseTimeConflict(slot1, slot2 courseTime) bool {
 	// Different days - no conflict
 	if slot1.Day != slot2.Day {
 		return false
@@ -80,20 +80,20 @@ func HasConflict(slot1, slot2 TimeSlot) bool {
 	return start1 < end2 && start2 < end1
 }
 
-// SchedulesConflict checks if two schedule strings conflict
-func SchedulesConflict(schedule1, schedule2 string) (bool, error) {
-	slots1, err := ParseSchedule(schedule1)
+// hasCourseScheduleConflict checks if two schedule strings conflict
+func hasCourseScheduleConflict(schedule1, schedule2 string) (bool, error) {
+	slots1, err := parseCourseSchedule(schedule1)
 	if err != nil {
 		return false, fmt.Errorf("schedule1: %w", err)
 	}
-	slots2, err := ParseSchedule(schedule2)
+	slots2, err := parseCourseSchedule(schedule2)
 	if err != nil {
 		return false, fmt.Errorf("schedule2: %w", err)
 	}
 
 	for _, s1 := range slots1 {
 		for _, s2 := range slots2 {
-			if HasConflict(s1, s2) {
+			if hasCourseTimeConflict(s1, s2) {
 				return true, nil
 			}
 		}
