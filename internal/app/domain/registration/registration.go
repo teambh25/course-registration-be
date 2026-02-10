@@ -1,35 +1,33 @@
-package cache
+package registration
 
 import (
 	"course-reg/internal/app/domain/e"
-	"course-reg/internal/pkg/utils"
 	"fmt"
 	"sync"
-	"time"
 )
 
-type RegistrationState struct {
+type State struct {
 	mu        sync.RWMutex
 	enabled   bool
 	startTime string
 	endTime   string
 }
 
-func NewRegistrationState(enabled bool, startTime, endTime string) *RegistrationState {
-	return &RegistrationState{
+func NewState(enabled bool, startTime, endTime string) *State {
+	return &State{
 		enabled:   enabled,
 		startTime: startTime,
 		endTime:   endTime,
 	}
 }
 
-func (rs *RegistrationState) IsEnabled() bool {
+func (rs *State) IsEnabled() bool {
 	rs.mu.RLock()
 	defer rs.mu.RUnlock()
 	return rs.enabled
 }
 
-func (rs *RegistrationState) ChangeEnabledAndAct(enabled bool, act func() error) error {
+func (rs *State) ChangeEnabledAndAct(enabled bool, act func() error) error {
 	rs.mu.Lock()
 	defer rs.mu.Unlock()
 
@@ -46,7 +44,7 @@ func (rs *RegistrationState) ChangeEnabledAndAct(enabled bool, act func() error)
 	return nil
 }
 
-func (rs *RegistrationState) RunIfEnabled(enabled bool, act func() error) error {
+func (rs *State) RunIfEnabled(enabled bool, act func() error) error {
 	if rs.mu.TryRLock() {
 		defer rs.mu.RUnlock()
 		if rs.enabled != enabled {
@@ -62,14 +60,14 @@ func (rs *RegistrationState) RunIfEnabled(enabled bool, act func() error) error 
 }
 
 // GetPeriod returns the registration start and end times
-func (rs *RegistrationState) GetPeriod() (startTime, endTime string) {
+func (rs *State) GetPeriod() (startTime, endTime string) {
 	rs.mu.RLock()
 	defer rs.mu.RUnlock()
 	return rs.startTime, rs.endTime
 }
 
 // SetPeriod sets the registration period
-func (rs *RegistrationState) SetPeriod(startTime, endTime string) {
+func (rs *State) SetPeriod(startTime, endTime string) {
 	rs.mu.Lock()
 	defer rs.mu.Unlock()
 	rs.startTime = startTime
@@ -77,23 +75,23 @@ func (rs *RegistrationState) SetPeriod(startTime, endTime string) {
 }
 
 // IsWithinRegistrationPeriod checks if the given time is within the registration period
-func (rs *RegistrationState) IsWithinRegistrationPeriod(now time.Time) (bool, error) {
-	rs.mu.RLock()
-	defer rs.mu.RUnlock()
+// func (rs *RegistrationState) IsWithinRegistrationPeriod(now time.Time) (bool, error) {
+// 	rs.mu.RLock()
+// 	defer rs.mu.RUnlock()
 
-	if rs.startTime == "" || rs.endTime == "" {
-		return false, nil
-	}
+// 	if rs.startTime == "" || rs.endTime == "" {
+// 		return false, nil
+// 	}
 
-	startTime, err := utils.StringToTime(rs.startTime)
-	if err != nil {
-		return false, err
-	}
+// 	startTime, err := utils.StringToTime(rs.startTime)
+// 	if err != nil {
+// 		return false, err
+// 	}
 
-	endTime, err := utils.StringToTime(rs.endTime)
-	if err != nil {
-		return false, err
-	}
+// 	endTime, err := utils.StringToTime(rs.endTime)
+// 	if err != nil {
+// 		return false, err
+// 	}
 
-	return now.After(startTime) && now.Before(endTime), nil
-}
+// 	return now.After(startTime) && now.Before(endTime), nil
+// }

@@ -1,8 +1,8 @@
 package service
 
 import (
-	"course-reg/internal/app/domain/cache"
 	"course-reg/internal/app/domain/constants"
+	"course-reg/internal/app/domain/registration"
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/repository"
 )
@@ -10,15 +10,15 @@ import (
 type CourseRegService struct {
 	courseRepo       repository.CourseRepositoryInterface
 	enrollRepo       repository.EnrollmentRepositoryInterface
-	enrollmentWorker *worker.Worker
-	regState         *cache.RegistrationState
+	enrollmentWorker *worker.EnrollmentWorker
+	regState         *registration.State
 }
 
 func NewCourseRegService(
 	c repository.CourseRepositoryInterface,
 	e repository.EnrollmentRepositoryInterface,
-	w *worker.Worker,
-	r *cache.RegistrationState,
+	w *worker.EnrollmentWorker,
+	r *registration.State,
 ) *CourseRegService {
 	return &CourseRegService{
 		courseRepo:       c,

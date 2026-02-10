@@ -22,8 +22,8 @@ type EnrollmentCache struct {
 	WaitingCount          map[uint]*atomic.Int32     // courseID -> count of waiting students (atomic)
 }
 
-func NewEnrollmentCache() *EnrollmentCache {
-	return &EnrollmentCache{
+func NewEnrollmentCacheWithData(students []models.Student, courses []models.Course, enrollments []models.Enrollment) (*EnrollmentCache, error) {
+	cache := &EnrollmentCache{
 		CourseCapacity:        make(map[uint]int),
 		ConflictGraph:         make(map[uint]map[uint]bool),
 		StudentCourses:        make(map[uint]map[uint]struct{}),
@@ -31,10 +31,6 @@ func NewEnrollmentCache() *EnrollmentCache {
 		EnrolledCount:         make(map[uint]*atomic.Int32),
 		WaitingCount:          make(map[uint]*atomic.Int32),
 	}
-}
-
-func NewEnrollmentCacheWithData(students []models.Student, courses []models.Course, enrollments []models.Enrollment) (*EnrollmentCache, error) {
-	cache := NewEnrollmentCache()
 	cache.loadInitStudents(students)
 	cache.loadInitCourses(courses)
 	cache.loadEnrollments(enrollments)

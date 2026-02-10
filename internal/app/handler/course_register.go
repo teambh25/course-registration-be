@@ -28,7 +28,7 @@ func (h *CourseRegHandler) EnrollCourse(c *gin.Context) {
 
 	var req dto.EnrollCourseRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Println("enroll course :", err.Error()) // If this occurs, check the client-side request
+		log.Println("[error] enroll course :", err.Error()) // If this occurs, check the client-side request
 		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 수강 신청 요청"})
 		return
 	}
@@ -58,7 +58,7 @@ func enrollErrToResponse(err error) (int, string) {
 	case errors.Is(err, e.ErrInvalidRegistrationPeriod):
 		return http.StatusForbidden, "수강신청 기간이 아닙니다"
 	default:
-		log.Println("enroll unexpected error:", err.Error())
+		log.Println("[error] enroll unexpected error:", err.Error())
 		return http.StatusInternalServerError, "알 수 없는 오류가 발생했습니다"
 	}
 }

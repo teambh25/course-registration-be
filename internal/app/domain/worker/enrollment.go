@@ -5,7 +5,6 @@ import (
 	"course-reg/internal/app/domain/constants"
 	"course-reg/internal/app/domain/e"
 	"course-reg/internal/app/models"
-	"course-reg/internal/app/repository"
 	"errors"
 )
 
@@ -17,14 +16,7 @@ type EnrollmentRequest struct {
 	Response  chan error
 }
 
-func NewEnrollmentWorker(queueSize int, enrollRepo repository.EnrollmentRepositoryInterface) *Worker {
-	return &Worker{
-		queueSize:  queueSize,
-		enrollRepo: enrollRepo,
-	}
-}
-
-func (w *Worker) Start(students []models.Student, courses []models.Course, enrollments []models.Enrollment) error {
+func (w *EnrollmentWorker) Start(students []models.Student, courses []models.Course, enrollments []models.Enrollment) error {
 	if w.requestChan != nil {
 		return errors.New("worker already running")
 	}
@@ -46,13 +38,13 @@ func (w *Worker) Start(students []models.Student, courses []models.Course, enrol
 	return nil
 }
 
-func (w *Worker) Stop() {
+func (w *EnrollmentWorker) Stop() {
 	close(w.requestChan)
 	w.wg.Wait()
 	w.requestChan = nil
 }
 
-func (w *Worker) worker() {
+func (w *EnrollmentWorker) worker() {
 	for req := range w.requestChan {
 		var err error
 
@@ -65,7 +57,7 @@ func (w *Worker) worker() {
 	}
 }
 
-func (w *Worker) Enroll(studentID, courseID uint) error {
+func (w *EnrollmentWorker) Enroll(studentID, courseID uint) error {
 	req := EnrollmentRequest{
 		Type:      ENROLL,
 		StudentID: studentID,
@@ -78,7 +70,7 @@ func (w *Worker) Enroll(studentID, courseID uint) error {
 }
 
 // processEnroll handles enrollment logic
-func (w *Worker) processEnroll(req EnrollmentRequest) error {
+func (w *EnrollmentWorker) processEnroll(req EnrollmentRequest) error {
 	studentID := req.StudentID
 	courseID := req.CourseID
 
@@ -109,7 +101,8 @@ func (w *Worker) processEnroll(req EnrollmentRequest) error {
 	return nil
 }
 
-func (w *Worker) GetAllCourseStatus() map[uint]constants.CourseStatus {
+// todo : 다른 파일로 분리?
+func (w *EnrollmentWorker) GetAllCourseStatus() map[uint]constants.CourseStatus {
 	status := make(map[uint]constants.CourseStatus)
 	for courseID, info := range w.cache.GetAllCourseCountInfo() {
 		if info.EnrolledCount < info.Capacity {
@@ -123,7 +116,7 @@ func (w *Worker) GetAllCourseStatus() map[uint]constants.CourseStatus {
 	return status
 }
 
-func (w *Worker) processAddWaitList() {
+func (w *EnrollmentWorker) processAddWaitList() {
 	// isWaitlistFull, err := w.cache.IsWaitlistFull(courseID)
 	// if err != nil {
 	// 	return EnrollmentResponse{

@@ -8,8 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"course-reg/internal/app/domain/cache"
 	"course-reg/internal/app/domain/export"
+	"course-reg/internal/app/domain/registration"
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/handler"
 	"course-reg/internal/app/models"
@@ -23,8 +23,8 @@ import (
 // Application contains all application components and their dependencies
 type Application struct {
 	DB       *gorm.DB
-	Worker   *worker.Worker
-	RegState *cache.RegistrationState
+	Worker   *worker.EnrollmentWorker
+	RegState *registration.State
 	Router   *gin.Engine
 }
 
@@ -135,7 +135,7 @@ func newRepositories(db *gorm.DB) *repositories {
 	}
 }
 
-func newRegistrationState(configRepo repository.RegistrationConfigRepositoryInterface) (*cache.RegistrationState, bool, error) {
+func newRegistrationState(configRepo repository.RegistrationConfigRepositoryInterface) (*registration.State, bool, error) {
 	config, err := configRepo.GetConfig()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -155,7 +155,7 @@ func newRegistrationState(configRepo repository.RegistrationConfigRepositoryInte
 	}
 
 	// Always start with disabled state; restore later via StartRegistration
-	regState := cache.NewRegistrationState(false, config.StartTime, config.EndTime)
+	regState := registration.NewState(false, config.StartTime, config.EndTime)
 	return regState, config.Enabled, nil
 }
 
@@ -165,7 +165,7 @@ type services struct {
 	CourseReg service.CourseRegServiceInterface
 }
 
-func newServices(repos *repositories, w *worker.Worker, rs *cache.RegistrationState, warmupFunc func()) *services {
+func newServices(repos *repositories, w *worker.EnrollmentWorker, rs *registration.State, warmupFunc func()) *services {
 	return &services{
 		Auth:      service.NewAuthService(repos.Student),
 		Admin:     service.NewAdminService(repos.Student, repos.Course, repos.Enrollment, repos.RegistrationConfig, w, rs, warmupFunc),

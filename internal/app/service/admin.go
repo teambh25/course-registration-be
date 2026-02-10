@@ -3,8 +3,8 @@ package service
 import (
 	"log"
 
-	"course-reg/internal/app/domain/cache"
 	"course-reg/internal/app/domain/export"
+	"course-reg/internal/app/domain/registration"
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
@@ -15,8 +15,8 @@ type AdminService struct {
 	courseRepo    repository.CourseRepositoryInterface
 	enrollRepo    repository.EnrollmentRepositoryInterface
 	regConfigRepo repository.RegistrationConfigRepositoryInterface
-	enrollWorker  *worker.Worker
-	regState      *cache.RegistrationState
+	enrollWorker  *worker.EnrollmentWorker
+	regState      *registration.State
 	warmupFunc    func()
 }
 
@@ -25,8 +25,8 @@ func NewAdminService(
 	c repository.CourseRepositoryInterface,
 	e repository.EnrollmentRepositoryInterface,
 	rcRepo repository.RegistrationConfigRepositoryInterface,
-	w *worker.Worker,
-	rs *cache.RegistrationState,
+	w *worker.EnrollmentWorker,
+	rs *registration.State,
 	warmupFunc func(),
 ) *AdminService {
 	return &AdminService{
