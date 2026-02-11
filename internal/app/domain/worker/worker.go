@@ -6,6 +6,16 @@ import (
 	"sync"
 )
 
+type RequestType int
+
+const (
+	ENROLL RequestType = iota + 1
+	CANCEL
+	READ_ALL
+	ADMIN_ENROLL
+	ADMIN_CANCEL
+)
+
 // EnrollmentWorker handles enrollment operations with cache
 type EnrollmentWorker struct {
 	wg          sync.WaitGroup
@@ -21,13 +31,3 @@ func NewEnrollmentWorker(queueSize int, enrollRepo repository.EnrollmentReposito
 		enrollRepo: enrollRepo,
 	}
 }
-
-type RequestType int
-
-const (
-	ENROLL RequestType = iota + 1
-	CANCEL
-	READ_ALL
-	ADMIN_ENROLL
-	ADMIN_CANCEL
-)

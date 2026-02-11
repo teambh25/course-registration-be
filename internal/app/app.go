@@ -33,54 +33,63 @@ const workerQueueSize = 1000
 // NewApplication creates and initializes the entire application.
 // Dependencies are explicitly passed to each component, so incorrect ordering
 // will result in compile errors (undefined variable).
-func NewApplication() (*Application, error) {
+func NewApplication(cfg *setting.Config) (*Application, error) {
 	// 1. Database
-	db, err := database.Setup()
+	db, err := database.Setup(cfg.Database.URL, cfg.Database.PoolSize, cfg.Database.ConnMaxLifetime, cfg.Database.ConnMaxIdleTime)
 	if err != nil {
 		return nil, fmt.Errorf("database setup failed: %w", err)
 	}
 	log.Println("[info] database setup completed")
 
 	// 2. Repositories (depends on: db)
-	repos := newRepositories(db)
+	studentRepo := repository.NewStudentRepository(db)
+	courseRepo := repository.NewCourseRepository(db)
+	enrollRepo := repository.NewEnrollmentRepository(db)
+	regConfigRepo := repository.NewRegistrationConfigRepository(db)
 	log.Println("[info] repositories setup completed")
 
-	// 3. Static files (depends on: repos.Course)
-	if err := export.ExportCoursesToJson(repos.Course); err != nil {
+	// 3. Static files (depends on: courseRepo)
+	if err := export.ExportCoursesToJson(courseRepo); err != nil {
 		return nil, fmt.Errorf("static files setup failed: %w", err)
 	}
 	log.Println("[info] static files setup completed")
 
-	// 4. Worker (depends on: repos.Enrollment)
-	enrollWorker := worker.NewEnrollmentWorker(workerQueueSize, repos.Enrollment)
+	// 4. Worker (depends on: enrollRepo)
+	enrollWorker := worker.NewEnrollmentWorker(workerQueueSize, enrollRepo)
 	log.Println("[info] worker setup completed")
 
-	// 5. Registration state (depends on: repos.RegistrationConfig)
-	regState, wasEnabled, err := newRegistrationState(repos.RegistrationConfig)
+	// 5. Registration state (depends on: regConfigRepo)
+	regState, wasEnabled, err := loadRegistrationState(regConfigRepo)
 	if err != nil {
 		return nil, fmt.Errorf("registration state setup failed: %w", err)
 	}
 	log.Printf("[info] registration state setup completed (db_enabled: %v)", wasEnabled)
 
 	// 6. Services (depends on: repos, enrollWorker, regState, db)
-	warmupFunc := func() {
-		database.WarmupConnectionPool(db, setting.DatabaseSetting.PoolSize)
+	warmup := func() {
+		database.WarmupConnectionPool(db, cfg.Database.PoolSize)
 	}
-	services := newServices(repos, enrollWorker, regState, warmupFunc)
+	authService := service.NewAuthService(studentRepo, cfg.Secret.AdminID, cfg.Secret.AdminPW)
+	adminService := service.NewAdminService(studentRepo, courseRepo, enrollRepo, regConfigRepo, enrollWorker, regState, warmup)
+	courseRegService := service.NewCourseRegService(courseRepo, enrollRepo, enrollWorker, regState)
 	log.Println("[info] services setup completed")
 
 	// 7. Handlers (depends on: services)
-	handlers := newHandlers(services)
+	handlers := &handler.Handlers{
+		Auth:      handler.NewAuthHandler(authService),
+		Admin:     handler.NewAdminHandler(adminService),
+		CourseReg: handler.NewCourseRegHandler(courseRegService),
+	}
 	log.Println("[info] handlers setup completed")
 
 	// 8. Router (depends on: handlers)
-	router := routers.InitRouter(handlers.Admin, handlers.Auth, handlers.CourseReg)
+	router := routers.InitRouter(cfg.Server.RunMode, cfg.Secret.SessionKey, handlers)
 	log.Println("[info] router setup completed")
 
-	// 9. Restore registration if it was enabled before restart (depends on: services.Admin)
+	// 9. Restore registration if it was enabled before restart (depends on: adminService)
 	if wasEnabled {
 		log.Println("[info] restoring registration state from before restart")
-		if err := services.Admin.StartRegistration(); err != nil {
+		if err := adminService.StartRegistration(); err != nil {
 			return nil, fmt.Errorf("registration restore failed: %w", err)
 		}
 	}
@@ -108,34 +117,16 @@ func (app *Application) Shutdown() error {
 		sqlDB, err := app.DB.DB()
 		if err == nil {
 			if err := sqlDB.Close(); err != nil {
-				return fmt.Errorf("failed to close database: %w", err)
+				return fmt.Errorf("[warn] failed to close database: %w", err)
 			}
 		}
 	}
-
 	log.Println("[info] application shutdown completed")
+
 	return nil
 }
 
-// --- Helper functions for creating component groups ---
-
-type repositories struct {
-	Student            repository.StudentRepositoryInterface
-	Course             repository.CourseRepositoryInterface
-	Enrollment         repository.EnrollmentRepositoryInterface
-	RegistrationConfig repository.RegistrationConfigRepositoryInterface
-}
-
-func newRepositories(db *gorm.DB) *repositories {
-	return &repositories{
-		Student:            repository.NewStudentRepository(db),
-		Course:             repository.NewCourseRepository(db),
-		Enrollment:         repository.NewEnrollmentRepository(db),
-		RegistrationConfig: repository.NewRegistrationConfigRepository(db),
-	}
-}
-
-func newRegistrationState(configRepo repository.RegistrationConfigRepositoryInterface) (*registration.State, bool, error) {
+func loadRegistrationState(configRepo repository.RegistrationConfigRepositoryInterface) (*registration.State, bool, error) {
 	config, err := configRepo.GetConfig()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -157,32 +148,4 @@ func newRegistrationState(configRepo repository.RegistrationConfigRepositoryInte
 	// Always start with disabled state; restore later via StartRegistration
 	regState := registration.NewState(false, config.StartTime, config.EndTime)
 	return regState, config.Enabled, nil
-}
-
-type services struct {
-	Auth      service.AuthServiceInterface
-	Admin     service.AdminServiceInterface
-	CourseReg service.CourseRegServiceInterface
-}
-
-func newServices(repos *repositories, w *worker.EnrollmentWorker, rs *registration.State, warmupFunc func()) *services {
-	return &services{
-		Auth:      service.NewAuthService(repos.Student),
-		Admin:     service.NewAdminService(repos.Student, repos.Course, repos.Enrollment, repos.RegistrationConfig, w, rs, warmupFunc),
-		CourseReg: service.NewCourseRegService(repos.Course, repos.Enrollment, w, rs),
-	}
-}
-
-type handlers struct {
-	Auth      *handler.AuthHandler
-	Admin     *handler.AdminHandler
-	CourseReg *handler.CourseRegHandler
-}
-
-func newHandlers(s *services) *handlers {
-	return &handlers{
-		Auth:      handler.NewAuthHandler(s.Auth),
-		Admin:     handler.NewAdminHandler(s.Admin),
-		CourseReg: handler.NewCourseRegHandler(s.CourseReg),
-	}
 }

@@ -9,15 +9,19 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type App struct {
-	LogSavePath          string
-	LogSaveName          string
-	LogFileExt           string
-	TimeFormat           string
-	StaticCoursesFilePath string
+type Config struct {
+	App      App
+	Server   Server
+	Secret   Secret
+	Database Database
 }
 
-var AppSetting = &App{}
+type App struct {
+	LogSavePath string
+	LogSaveName string
+	LogFileExt  string
+	TimeFormat  string
+}
 
 type Server struct {
 	RunMode      string
@@ -26,15 +30,11 @@ type Server struct {
 	WriteTimeout time.Duration
 }
 
-var ServerSetting = &Server{}
-
 type Secret struct {
 	SessionKey string
 	AdminID    string
 	AdminPW    string
 }
-
-var SecretSetting = &Secret{}
 
 type Database struct {
 	URL             string
@@ -43,36 +43,35 @@ type Database struct {
 	ConnMaxIdleTime time.Duration
 }
 
-var DatabaseSetting = &Database{}
-
-// Setup initialize the configuration instance from environment variables
-func Setup() {
-	// Load .env file if it exists (ignore error if file doesn't exist)
+// Load reads environment variables and returns a Config instance
+func Load() *Config {
 	_ = godotenv.Load()
 
-	// App settings
-	AppSetting.LogSavePath = getEnvRequired("APP_LOG_SAVE_PATH")
-	AppSetting.LogSaveName = getEnvRequired("APP_LOG_SAVE_NAME")
-	AppSetting.LogFileExt = getEnvRequired("APP_LOG_FILE_EXT")
-	AppSetting.TimeFormat = getEnvRequired("APP_TIME_FORMAT")
-	AppSetting.StaticCoursesFilePath = getEnvRequired("APP_STATIC_COURSES_FILE_PATH")
-
-	// Server settings
-	ServerSetting.RunMode = getEnvRequired("SERVER_RUN_MODE")
-	ServerSetting.HttpPort = getEnvAsIntRequired("SERVER_HTTP_PORT")
-	ServerSetting.ReadTimeout = time.Duration(getEnvAsIntRequired("SERVER_READ_TIMEOUT")) * time.Second
-	ServerSetting.WriteTimeout = time.Duration(getEnvAsIntRequired("SERVER_WRITE_TIMEOUT")) * time.Second
-
-	// Database settings
-	DatabaseSetting.URL = getEnvRequired("DATABASE_URL")
-	DatabaseSetting.PoolSize = getEnvAsIntRequired("DATABASE_POOL_SIZE")
-	DatabaseSetting.ConnMaxLifetime = time.Duration(getEnvAsIntRequired("DATABASE_CONN_MAX_LIFETIME")) * time.Minute
-	DatabaseSetting.ConnMaxIdleTime = time.Duration(getEnvAsIntRequired("DATABASE_CONN_MAX_IDLE_TIME")) * time.Minute
-
-	// Secret settings
-	SecretSetting.SessionKey = getEnvRequired("SECRET_SESSION_KEY")
-	SecretSetting.AdminID = getEnvRequired("SECRET_ADMIN_ID")
-	SecretSetting.AdminPW = getEnvRequired("SECRET_ADMIN_PW")
+	return &Config{
+		App: App{
+			LogSavePath: getEnvRequired("APP_LOG_SAVE_PATH"),
+			LogSaveName: getEnvRequired("APP_LOG_SAVE_NAME"),
+			LogFileExt:  getEnvRequired("APP_LOG_FILE_EXT"),
+			TimeFormat:  getEnvRequired("APP_TIME_FORMAT"),
+		},
+		Server: Server{
+			RunMode:      getEnvRequired("SERVER_RUN_MODE"),
+			HttpPort:     getEnvAsIntRequired("SERVER_HTTP_PORT"),
+			ReadTimeout:  time.Duration(getEnvAsIntRequired("SERVER_READ_TIMEOUT")) * time.Second,
+			WriteTimeout: time.Duration(getEnvAsIntRequired("SERVER_WRITE_TIMEOUT")) * time.Second,
+		},
+		Database: Database{
+			URL:             getEnvRequired("DATABASE_URL"),
+			PoolSize:        getEnvAsIntRequired("DATABASE_POOL_SIZE"),
+			ConnMaxLifetime: time.Duration(getEnvAsIntRequired("DATABASE_CONN_MAX_LIFETIME")) * time.Minute,
+			ConnMaxIdleTime: time.Duration(getEnvAsIntRequired("DATABASE_CONN_MAX_IDLE_TIME")) * time.Minute,
+		},
+		Secret: Secret{
+			SessionKey: getEnvRequired("SECRET_SESSION_KEY"),
+			AdminID:    getEnvRequired("SECRET_ADMIN_ID"),
+			AdminPW:    getEnvRequired("SECRET_ADMIN_PW"),
+		},
+	}
 }
 
 // getEnvRequired retrieves an environment variable or exits if not set

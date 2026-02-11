@@ -3,21 +3,17 @@ package service
 import (
 	"course-reg/internal/app/repository"
 	"course-reg/internal/pkg/session"
-	"course-reg/internal/pkg/setting"
 	"log"
-)
-
-const (
-	ADMIN   int = 0
-	STUDENT int = 1
 )
 
 type AuthService struct {
 	studentRepo repository.StudentRepositoryInterface
+	adminID     string
+	adminPW     string
 }
 
-func NewAuthService(s repository.StudentRepositoryInterface) *AuthService {
-	return &AuthService{studentRepo: s}
+func NewAuthService(s repository.StudentRepositoryInterface, adminID, adminPW string) *AuthService {
+	return &AuthService{studentRepo: s, adminID: adminID, adminPW: adminPW}
 }
 
 func (a *AuthService) Check(username string, password string) (session.UserRole, uint, error) {
@@ -26,7 +22,7 @@ func (a *AuthService) Check(username string, password string) (session.UserRole,
 	var userID uint
 	var err error
 
-	if is_admin := setting.SecretSetting.AdminID == username && setting.SecretSetting.AdminPW == password; is_admin {
+	if a.adminID == username && a.adminPW == password {
 		role = session.RoleAdmin
 	} else {
 		userID, pw, err = a.studentRepo.FetchPassword(username)

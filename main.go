@@ -22,14 +22,13 @@ var profEnabled bool
 func init() {
 	flag.BoolVar(&profEnabled, "prof", false, "Enable pprof profiling endpoints")
 	flag.Parse()
-
-	setting.Setup()
-	// logging.Setup() // todo : 파일에 로깅할 수 있는 환경이 아니라 삭제해도 될거 같은데?
 }
 
 func main() {
+	cfg := setting.Load()
+
 	// Initialize application with all dependencies
-	application, err := app.NewApplication()
+	application, err := app.NewApplication(cfg)
 	if err != nil {
 		log.Fatalf("failed to initialize application: %v", err)
 	}
@@ -41,10 +40,10 @@ func main() {
 	}
 
 	server := &http.Server{
-		Addr:           fmt.Sprintf(":%d", setting.ServerSetting.HttpPort),
+		Addr:           fmt.Sprintf(":%d", cfg.Server.HttpPort),
 		Handler:        application.Router,
-		ReadTimeout:    setting.ServerSetting.ReadTimeout,
-		WriteTimeout:   setting.ServerSetting.WriteTimeout,
+		ReadTimeout:    cfg.Server.ReadTimeout,
+		WriteTimeout:   cfg.Server.WriteTimeout,
 		MaxHeaderBytes: 1 << 20,
 	}
 

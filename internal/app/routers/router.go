@@ -5,18 +5,17 @@ import (
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
 
+	"course-reg/internal/app/domain/export"
 	"course-reg/internal/app/handler"
 	"course-reg/internal/app/middleware"
-	"course-reg/internal/pkg/setting"
 )
 
 // InitRouter initialize routing information
 func InitRouter(
-	adminHandler *handler.AdminHandler,
-	authHandler *handler.AuthHandler,
-	courseRegHandler *handler.CourseRegHandler,
+	runMode, sessionKey string,
+	h *handler.Handlers,
 ) *gin.Engine {
-	gin.SetMode(setting.ServerSetting.RunMode) // set gin mode (must be called before gin.New())
+	gin.SetMode(runMode) // set gin mode (must be called before gin.New())
 	r := gin.New()
 	if gin.Mode() != gin.ReleaseMode {
 		r.Use(gin.Logger())
@@ -25,41 +24,41 @@ func InitRouter(
 	r.Use(middleware.CORS()) // CORS
 
 	// session
-	store := memstore.NewStore([]byte(setting.SecretSetting.SessionKey)) // authentication key for session
+	store := memstore.NewStore([]byte(sessionKey)) // authentication key for session
 	r.Use(sessions.Sessions("course_reg_session", store))
 
 	v1 := r.Group("/api/v1")
 	{
 		auth := v1.Group("/auth")
 		{
-			auth.POST("/login", authHandler.Login)
-			auth.POST("/logout", authHandler.Logout)
-			auth.GET("/check", authHandler.Check)
+			auth.POST("/login", h.Auth.Login)
+			auth.POST("/logout", h.Auth.Logout)
+			auth.GET("/check", h.Auth.Check)
 		}
 
 		admin := v1.Group("/admin")
 		admin.Use(middleware.AuthAdmin())
 		{
-			admin.GET("/registration/state", adminHandler.GetRegistrationState)
-			admin.POST("/registration/start", adminHandler.StartRegistration)
-			admin.POST("/registration/pause", adminHandler.PauseRegistration)
-			admin.PUT("/registration/period", adminHandler.SetRegistrationPeriod)
-			admin.GET("/registration/period", adminHandler.GetRegistrationPeriod)
+			admin.GET("/registration/state", h.Admin.GetRegistrationState)
+			admin.POST("/registration/start", h.Admin.StartRegistration)
+			admin.POST("/registration/pause", h.Admin.PauseRegistration)
+			admin.PUT("/registration/period", h.Admin.SetRegistrationPeriod)
+			admin.GET("/registration/period", h.Admin.GetRegistrationPeriod)
 
 			setup := admin.Group("/setup")
 			{
 				// todo : reset과 init atomic하게 묶기?
 				// admin.POST("/students/init", adminHandler.RegisterStudents)
 
-				setup.POST("/students/register", adminHandler.RegisterStudents)
-				setup.DELETE("/students/reset", adminHandler.ResetStudents)
+				setup.POST("/students/register", h.Admin.RegisterStudents)
+				setup.DELETE("/students/reset", h.Admin.ResetStudents)
 
-				setup.POST("/courses", adminHandler.CreateCourse)
-				setup.DELETE("/courses/:course_id", adminHandler.DeleteCourse)
-				setup.POST("/courses/register", adminHandler.RegisterCourses)
-				setup.DELETE("/courses/reset", adminHandler.ResetCourses)
+				setup.POST("/courses", h.Admin.CreateCourse)
+				setup.DELETE("/courses/:course_id", h.Admin.DeleteCourse)
+				setup.POST("/courses/register", h.Admin.RegisterCourses)
+				setup.DELETE("/courses/reset", h.Admin.ResetCourses)
 
-				setup.DELETE("/enrollments/reset", adminHandler.ResetEnrollments)
+				setup.DELETE("/enrollments/reset", h.Admin.ResetEnrollments)
 			}
 
 			// 수강 신청 기간 중에는 어떻게?
@@ -70,8 +69,8 @@ func InitRouter(
 		user := v1.Group("/courses")
 		user.Use(middleware.AuthUser())
 		{
-			user.StaticFile("/", setting.AppSetting.StaticCoursesFilePath)
-			user.GET("/status", courseRegHandler.GetAllCourseStatus)
+			user.StaticFile("/", export.StaticCoursesFilePath)
+			user.GET("/status", h.CourseReg.GetAllCourseStatus)
 			// user.GET("/enrollments", courseRegHandler.GetCoursesCapacityStatus)
 
 		}
@@ -79,7 +78,7 @@ func InitRouter(
 		courseReg := v1.Group("/course-reg")
 		courseReg.Use(middleware.AuthStudent())
 		{
-			courseReg.POST("/enrollment", courseRegHandler.EnrollCourse)
+			courseReg.POST("/enrollment", h.CourseReg.EnrollCourse)
 			// courseReg.DELETE("/:course_id/enroll", courseRegHandler.CancelEnrollment)
 
 			// courseReg.POST("/:course_id/waitlist", courseRegHandler.AddToWaitlist)

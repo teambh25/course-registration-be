@@ -13,30 +13,30 @@ import (
 type AdminService struct {
 	studentRepo   repository.StudentRepositoryInterface
 	courseRepo    repository.CourseRepositoryInterface
-	enrollRepo    repository.EnrollmentRepositoryInterface
+	enrollRepo   repository.EnrollmentRepositoryInterface
 	regConfigRepo repository.RegistrationConfigRepositoryInterface
 	enrollWorker  *worker.EnrollmentWorker
 	regState      *registration.State
-	warmupFunc    func()
+	warmup        func()
 }
 
 func NewAdminService(
 	s repository.StudentRepositoryInterface,
 	c repository.CourseRepositoryInterface,
 	e repository.EnrollmentRepositoryInterface,
-	rcRepo repository.RegistrationConfigRepositoryInterface,
+	rc repository.RegistrationConfigRepositoryInterface,
 	w *worker.EnrollmentWorker,
 	rs *registration.State,
-	warmupFunc func(),
+	warmup func(),
 ) *AdminService {
 	return &AdminService{
 		studentRepo:   s,
 		courseRepo:    c,
-		enrollRepo:    e,
-		regConfigRepo: rcRepo,
+		enrollRepo:   e,
+		regConfigRepo: rc,
 		enrollWorker:  w,
 		regState:      rs,
-		warmupFunc:    warmupFunc,
+		warmup:        warmup,
 	}
 }
 
@@ -46,11 +46,9 @@ func (s *AdminService) GetRegistrationState() bool {
 
 func (s *AdminService) StartRegistration() error {
 	err := s.regState.ChangeEnabledAndAct(true, func() error {
-		// Warm up connection pool for login traffic surge
-		if s.warmupFunc != nil {
-			s.warmupFunc()
+		if s.warmup != nil {
+			s.warmup()
 		}
-
 		students, err := s.studentRepo.FetchAllStudents()
 		if err != nil {
 			log.Println("failed to load students:", err.Error())
