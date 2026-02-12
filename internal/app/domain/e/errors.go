@@ -10,6 +10,7 @@ var (
 	ErrDuplicateStudent = errors.New("duplicate student")
 
 	// for Course Registration
+	ErrWorkerInternal            = errors.New("internal worker error")
 	ErrCourseNotFound            = errors.New("course not found")
 	ErrStudentNotFound           = errors.New("student not found")
 	ErrTimeConflict              = errors.New("time conflict with enrolled course")

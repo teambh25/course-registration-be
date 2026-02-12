@@ -47,8 +47,6 @@ func enrollErrToResponse(err error) (int, string) {
 	switch {
 	case errors.Is(err, e.ErrCourseNotFound):
 		return http.StatusNotFound, "존재하지 않는 강의입니다"
-	case errors.Is(err, e.ErrStudentNotFound):
-		return http.StatusNotFound, "존재하지 않는 학생입니다"
 	case errors.Is(err, e.ErrTimeConflict):
 		return http.StatusConflict, "시간이 겹치는 강의가 있습니다"
 	case errors.Is(err, e.ErrAlreadyEnrolled):
@@ -60,6 +58,8 @@ func enrollErrToResponse(err error) (int, string) {
 		return http.StatusInternalServerError, "수강신청 처리 중 오류가 발생했습니다"
 	case errors.Is(err, e.ErrInvalidRegistrationPeriod):
 		return http.StatusForbidden, "수강신청 기간이 아닙니다"
+	case errors.Is(err, e.ErrStudentNotFound), errors.Is(err, e.ErrWorkerInternal):
+		return http.StatusInternalServerError, "내부 오류가 발생했습니다"
 	default:
 		log.Println("[error] enroll unexpected error:", err.Error())
 		return http.StatusInternalServerError, "알 수 없는 오류가 발생했습니다"

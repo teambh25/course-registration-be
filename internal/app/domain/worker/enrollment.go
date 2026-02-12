@@ -7,6 +7,7 @@ import (
 	"course-reg/internal/app/models"
 	"errors"
 	"fmt"
+	"log"
 )
 
 // EnrollmentRequest represents an enrollment request
@@ -49,10 +50,21 @@ func (w *EnrollmentWorker) worker() {
 	for req := range w.requestChan {
 		var err error
 
-		switch req.Type {
-		case ENROLL:
-			err = w.processEnroll(req)
-		}
+		// Use defer inside an anonymous function to ensure resources are released promptly
+		// and to prevent potential resource leaks within the loop scope.
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("[fatal] worker panic: type=%d studentID=%d courseID=%d err=%v", req.Type, req.StudentID, req.CourseID, r)
+					err = e.ErrWorkerInternal
+				}
+			}()
+
+			switch req.Type {
+			case ENROLL:
+				err = w.processEnroll(req)
+			}
+		}()
 
 		req.Response <- err
 	}
@@ -75,12 +87,13 @@ func (w *EnrollmentWorker) processEnroll(req EnrollmentRequest) error {
 	studentID := req.StudentID
 	courseID := req.CourseID
 
-	if !w.cache.CourseExists(courseID) {
-		return e.ErrCourseNotFound
+	if !w.cache.StudentExists(studentID) {
+		log.Printf("[fatal] invalide student ID : type=%d studentID=%d courseID=%d err=%v", req.Type, req.StudentID, req.CourseID)
+		return e.ErrStudentNotFound
 	}
 
-	if !w.cache.StudentExists(studentID) {
-		return e.ErrStudentNotFound
+	if !w.cache.CourseExists(courseID) {
+		return e.ErrCourseNotFound
 	}
 
 	if w.cache.HasTimeConflict(studentID, courseID) {
