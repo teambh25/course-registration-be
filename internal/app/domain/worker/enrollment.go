@@ -96,16 +96,16 @@ func (w *EnrollmentWorker) processEnroll(req EnrollmentRequest) error {
 		return e.ErrCourseNotFound
 	}
 
-	if w.cache.HasTimeConflict(studentID, courseID) {
-		return e.ErrTimeConflict
-	}
-
 	if w.cache.IsStudentEnrolled(studentID, courseID) {
 		return e.ErrAlreadyEnrolled
 	}
 
-	pos, err := w.cache.GetPosIfNotFull(courseID)
-	if err != nil {
+	if w.cache.HasTimeConflict(studentID, courseID) {
+		return e.ErrTimeConflict
+	}
+
+	pos, ok := w.cache.GetAvailablePos(courseID)
+	if !ok {
 		return e.ErrCourseFull
 	}
 
