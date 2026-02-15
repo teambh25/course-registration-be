@@ -1,6 +1,9 @@
 package repository
 
-import "course-reg/internal/app/models"
+import (
+	"context"
+	"course-reg/internal/app/models"
+)
 
 type StudentRepositoryInterface interface {
 	FetchPassword(username string) (uint, string, error)
@@ -18,7 +21,7 @@ type CourseRepositoryInterface interface {
 }
 
 type EnrollmentRepositoryInterface interface {
-	InsertEnrollment(enrollment *models.Enrollment) error
+	InsertEnrollment(ctx context.Context, enrollment *models.Enrollment) error
 	BatchInsertEnrollments(enrollments []models.Enrollment) error
 	DeleteEnrollment(studentID uint, courseID uint) error
 	FetchAllEnrollments() ([]models.Enrollment, error)

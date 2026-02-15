@@ -9,8 +9,11 @@ var (
 	ErrInvalidInput     = errors.New("invalid input data")
 	ErrDuplicateStudent = errors.New("duplicate student")
 
-	// for Course Registration
-	ErrWorkerInternal            = errors.New("internal worker error")
+	// Worker
+	ErrWorkerInternal = errors.New("internal worker error")
+	ErrWorkerTimeout  = errors.New("worker request timeout")
+
+	// Enrollment
 	ErrCourseNotFound            = errors.New("course not found")
 	ErrStudentNotFound           = errors.New("student not found")
 	ErrTimeConflict              = errors.New("time conflict with enrolled course")

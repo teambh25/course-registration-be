@@ -4,7 +4,10 @@ import (
 	"course-reg/internal/app/domain/cache"
 	"course-reg/internal/app/repository"
 	"sync"
+	"time"
 )
+
+const workerTimeout = 5 * time.Second
 
 type RequestType int
 

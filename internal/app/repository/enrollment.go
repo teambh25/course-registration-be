@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"course-reg/internal/app/models"
 	"fmt"
 
@@ -15,8 +16,8 @@ func NewEnrollmentRepository(db *gorm.DB) *EnrollmentRepository {
 	return &EnrollmentRepository{db: db}
 }
 
-func (r *EnrollmentRepository) InsertEnrollment(enrollment *models.Enrollment) error {
-	result := r.db.Create(enrollment)
+func (r *EnrollmentRepository) InsertEnrollment(ctx context.Context, enrollment *models.Enrollment) error {
+	result := r.db.WithContext(ctx).Create(enrollment)
 	if result.Error != nil {
 		return fmt.Errorf("create failed: %w", result.Error)
 	}

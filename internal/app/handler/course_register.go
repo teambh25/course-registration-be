@@ -45,6 +45,8 @@ func (h *CourseRegHandler) EnrollCourse(c *gin.Context) {
 
 func enrollErrToResponse(err error) (int, string) {
 	switch {
+	case errors.Is(err, e.ErrInvalidRegistrationPeriod):
+		return http.StatusForbidden, "수강신청 기간이 아닙니다"
 	case errors.Is(err, e.ErrCourseNotFound):
 		return http.StatusNotFound, "존재하지 않는 강의입니다"
 	case errors.Is(err, e.ErrTimeConflict):
@@ -53,11 +55,12 @@ func enrollErrToResponse(err error) (int, string) {
 		return http.StatusConflict, "이미 신청한 강의입니다"
 	case errors.Is(err, e.ErrCourseFull):
 		return http.StatusConflict, "정원이 초과되었습니다"
+	case errors.Is(err, e.ErrWorkerTimeout):
+		log.Println("[error] worker timeout:", err)
+		return http.StatusServiceUnavailable, "서버가 일시적으로 응답할 수 없습니다. 잠시 후 다시 시도해주세요"
 	case errors.Is(err, e.ErrEnrollmentDBFailed):
 		log.Println("[error] enrollment DB insert failed:", err)
 		return http.StatusInternalServerError, "수강신청 처리 중 오류가 발생했습니다"
-	case errors.Is(err, e.ErrInvalidRegistrationPeriod):
-		return http.StatusForbidden, "수강신청 기간이 아닙니다"
 	case errors.Is(err, e.ErrStudentNotFound), errors.Is(err, e.ErrWorkerInternal):
 		return http.StatusInternalServerError, "내부 오류가 발생했습니다"
 	default:

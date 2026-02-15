@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"course-reg/internal/app/domain/cache"
 	"course-reg/internal/app/domain/constants"
 	"course-reg/internal/app/domain/e"
@@ -60,9 +61,16 @@ func (w *EnrollmentWorker) worker() {
 				}
 			}()
 
+			ctx, cancel := context.WithTimeout(context.Background(), workerTimeout)
+			defer cancel()
+
 			switch req.Type {
 			case ENROLL:
-				err = w.processEnroll(req)
+				err = w.processEnroll(ctx, req)
+			}
+
+			if err != nil && ctx.Err() != nil {
+				err = fmt.Errorf("%w: %v", e.ErrWorkerTimeout, err)
 			}
 		}()
 
@@ -83,7 +91,7 @@ func (w *EnrollmentWorker) Enroll(studentID, courseID uint) error {
 }
 
 // processEnroll handles enrollment logic
-func (w *EnrollmentWorker) processEnroll(req EnrollmentRequest) error {
+func (w *EnrollmentWorker) processEnroll(ctx context.Context, req EnrollmentRequest) error {
 	studentID := req.StudentID
 	courseID := req.CourseID
 
@@ -109,7 +117,7 @@ func (w *EnrollmentWorker) processEnroll(req EnrollmentRequest) error {
 		return e.ErrCourseFull
 	}
 
-	if err := w.enrollRepo.InsertEnrollment(&models.Enrollment{StudentID: studentID, CourseID: courseID, Position: pos}); err != nil {
+	if err := w.enrollRepo.InsertEnrollment(ctx, &models.Enrollment{StudentID: studentID, CourseID: courseID, Position: pos}); err != nil {
 		return fmt.Errorf("%w: %v", e.ErrEnrollmentDBFailed, err)
 	}
 	w.cache.EnrollStudent(studentID, courseID)
