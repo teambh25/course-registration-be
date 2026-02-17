@@ -2,10 +2,19 @@ package repository
 
 import (
 	"context"
+	"course-reg/internal/app/domain/e"
 	"course-reg/internal/app/models"
+	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
+)
+
+const (
+	pgUniqueViolation        = "23505"
+	constraintStudentCourse  = "idx_student_course"
+	constraintCoursePosition = "idx_course_position"
 )
 
 type EnrollmentRepository struct {
@@ -19,9 +28,34 @@ func NewEnrollmentRepository(db *gorm.DB) *EnrollmentRepository {
 func (r *EnrollmentRepository) InsertEnrollment(ctx context.Context, enrollment *models.Enrollment) error {
 	result := r.db.WithContext(ctx).Create(enrollment)
 	if result.Error != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(result.Error, &pgErr) && pgErr.Code == pgUniqueViolation {
+			switch pgErr.ConstraintName {
+			case constraintStudentCourse:
+				return e.ErrDBDuplicateEnrollment
+			case constraintCoursePosition:
+				return e.ErrDBPositionTaken
+			}
+		}
 		return fmt.Errorf("create failed: %w", result.Error)
 	}
 	return nil
+}
+
+func (r *EnrollmentRepository) GetMaxPosition(ctx context.Context, courseID uint) (int, error) {
+	var maxPos *int
+	err := r.db.WithContext(ctx).
+		Model(&models.Enrollment{}).
+		Where("course_id = ?", courseID).
+		Select("MAX(position)").
+		Scan(&maxPos).Error
+	if err != nil {
+		return 0, fmt.Errorf("get max position failed: %w", err)
+	}
+	if maxPos == nil {
+		return -1, nil
+	}
+	return *maxPos, nil
 }
 
 func (r *EnrollmentRepository) BatchInsertEnrollments(enrollments []models.Enrollment) error {

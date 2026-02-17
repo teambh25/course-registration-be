@@ -22,6 +22,7 @@ type CourseRepositoryInterface interface {
 
 type EnrollmentRepositoryInterface interface {
 	InsertEnrollment(ctx context.Context, enrollment *models.Enrollment) error
+	GetMaxPosition(ctx context.Context, courseID uint) (int, error)
 	BatchInsertEnrollments(enrollments []models.Enrollment) error
 	DeleteEnrollment(studentID uint, courseID uint) error
 	FetchAllEnrollments() ([]models.Enrollment, error)

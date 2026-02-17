@@ -56,10 +56,10 @@ func enrollErrToResponse(err error) (int, string) {
 	case errors.Is(err, e.ErrCourseFull):
 		return http.StatusConflict, "정원이 초과되었습니다"
 	case errors.Is(err, e.ErrWorkerTimeout):
-		log.Println("[error] worker timeout:", err)
-		return http.StatusServiceUnavailable, "서버가 일시적으로 응답할 수 없습니다. 잠시 후 다시 시도해주세요"
+		return http.StatusServiceUnavailable, "처리 결과를 확인할 수 없습니다. 수강 신청 내역을 확인해주세요"
+	case errors.Is(err, e.ErrCacheSyncFailed):
+		return http.StatusServiceUnavailable, "처리 결과를 확인할 수 없습니다. 수강 신청 내역을 확인해주세요"
 	case errors.Is(err, e.ErrEnrollmentDBFailed):
-		log.Println("[error] enrollment DB insert failed:", err)
 		return http.StatusInternalServerError, "수강신청 처리 중 오류가 발생했습니다"
 	case errors.Is(err, e.ErrStudentNotFound), errors.Is(err, e.ErrWorkerInternal):
 		return http.StatusInternalServerError, "내부 오류가 발생했습니다"

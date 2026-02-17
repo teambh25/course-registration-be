@@ -7,7 +7,10 @@ import (
 	"time"
 )
 
-const workerTimeout = 5 * time.Second
+const (
+	workerTimeout       = 5 * time.Second
+	maxPositionRetries  = 3
+)
 
 type RequestType int
 

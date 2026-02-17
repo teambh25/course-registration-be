@@ -70,6 +70,7 @@ func (w *EnrollmentWorker) worker() {
 			}
 
 			if err != nil && ctx.Err() != nil {
+				log.Printf("[error] worker timeout: type=%d studentID=%d courseID=%d err=%v", req.Type, req.StudentID, req.CourseID, err)
 				err = fmt.Errorf("%w: %v", e.ErrWorkerTimeout, err)
 			}
 		}()
@@ -96,7 +97,7 @@ func (w *EnrollmentWorker) processEnroll(ctx context.Context, req EnrollmentRequ
 	courseID := req.CourseID
 
 	if !w.cache.StudentExists(studentID) {
-		log.Printf("[fatal] invalide student ID : type=%d studentID=%d courseID=%d err=%v", req.Type, req.StudentID, req.CourseID)
+		log.Printf("[fatal] invalid student ID: type=%d studentID=%d courseID=%d", req.Type, req.StudentID, req.CourseID)
 		return e.ErrStudentNotFound
 	}
 
@@ -112,17 +113,43 @@ func (w *EnrollmentWorker) processEnroll(ctx context.Context, req EnrollmentRequ
 		return e.ErrTimeConflict
 	}
 
-	pos, ok := w.cache.GetAvailablePos(courseID)
-	if !ok {
-		return e.ErrCourseFull
-	}
+	for retry := 0; retry <= maxPositionRetries; retry++ {
+		pos, ok := w.cache.GetAvailablePos(courseID)
+		if !ok {
+			return e.ErrCourseFull
+		}
 
-	if err := w.enrollRepo.InsertEnrollment(ctx, &models.Enrollment{StudentID: studentID, CourseID: courseID, Position: pos}); err != nil {
+		err := w.enrollRepo.InsertEnrollment(ctx, &models.Enrollment{StudentID: studentID, CourseID: courseID, Position: pos})
+		if err == nil {
+			w.cache.EnrollStudent(studentID, courseID)
+			return nil
+		}
+
+		if errors.Is(err, e.ErrDBDuplicateEnrollment) {
+			log.Printf("[warn] duplicate enrollment detected by DB (cache inconsistency): studentID=%d courseID=%d", studentID, courseID)
+			w.cache.EnrollStudent(studentID, courseID)
+			return nil
+		}
+		if errors.Is(err, e.ErrDBPositionTaken) {
+			log.Printf("[warn] position conflict (cache inconsistency), retrying: studentID=%d courseID=%d pos=%d retry=%d", studentID, courseID, pos, retry)
+			w.cache.IncrementEnrolledCount(courseID)
+			continue
+		}
+
+		log.Printf("[error] enrollment DB insert failed: studentID=%d courseID=%d err=%v", studentID, courseID, err)
 		return fmt.Errorf("%w: %v", e.ErrEnrollmentDBFailed, err)
 	}
-	w.cache.EnrollStudent(studentID, courseID)
 
-	return nil
+	log.Printf("[warn] position conflict retries exhausted, syncing cache from DB: studentID=%d courseID=%d", studentID, courseID)
+
+	maxPos, err := w.enrollRepo.GetMaxPosition(context.Background(), courseID)
+	if err != nil {
+		log.Printf("[error] DB fallback GetMaxPosition failed: studentID=%d courseID=%d err=%v", studentID, courseID, err)
+		return fmt.Errorf("%w: %v", e.ErrCacheSyncFailed, err)
+	}
+
+	w.cache.SyncEnrolledCount(courseID, int32(maxPos+1))
+	return e.ErrCacheSyncFailed
 }
 
 // todo : 다른 파일로 분리?

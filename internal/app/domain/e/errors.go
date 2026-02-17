@@ -20,5 +20,10 @@ var (
 	ErrAlreadyEnrolled           = errors.New("already enrolled in this course")
 	ErrCourseFull                = errors.New("course is full")
 	ErrEnrollmentDBFailed        = errors.New("failed to save enrollment")
+	ErrCacheSyncFailed           = errors.New("cache sync failed")
 	ErrInvalidRegistrationPeriod = errors.New("not within registration period")
+
+	// DB constraint errors
+	ErrDBDuplicateEnrollment = errors.New("db: duplicate enrollment")
+	ErrDBPositionTaken       = errors.New("db: position already taken")
 )

@@ -143,6 +143,18 @@ func (cache *EnrollmentCache) EnrollStudent(studentID, courseID uint) {
 	cache.StudentCourses[studentID][courseID] = struct{}{}
 }
 
+// IncrementEnrolledCount advances the position counter without enrolling a student.
+// Used to skip a position that is already taken in DB due to cache inconsistency.
+func (cache *EnrollmentCache) IncrementEnrolledCount(courseID uint) {
+	cache.EnrolledCount[courseID].Add(1)
+}
+
+// SyncEnrolledCount sets the enrolled count to the given value from DB.
+// Used to recover from cache inconsistency when retry is exhausted.
+func (cache *EnrollmentCache) SyncEnrolledCount(courseID uint, count int32) {
+	cache.EnrolledCount[courseID].Store(count)
+}
+
 // // IsWaitlistFull checks if a course's waitlist has reached capacity
 // // Assumes course existence is already validated
 // func (cache *EnrollmentCache) IsWaitlistFull(courseID uint) bool {
