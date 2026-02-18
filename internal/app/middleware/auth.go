@@ -11,7 +11,7 @@ func AuthUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		_, _, err := session.GetSession(c)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
 		}
 		c.Next()
 	}
@@ -21,7 +21,7 @@ func AuthAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role, _, err := session.GetSession(c)
 		if err != nil || role != session.RoleAdmin {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
 		}
 		c.Next()
 	}
@@ -31,7 +31,7 @@ func AuthStudent() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role, userID, err := session.GetSession(c)
 		if err != nil || role != session.RoleStudent {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
 		}
 		c.Set("studentID", userID)
 		c.Next()

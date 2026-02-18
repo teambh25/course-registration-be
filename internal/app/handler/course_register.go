@@ -22,25 +22,29 @@ func NewCourseRegHandler(s service.CourseRegServiceInterface) *CourseRegHandler 
 func (h *CourseRegHandler) EnrollCourse(c *gin.Context) {
 	studentID, ok := c.MustGet("studentID").(uint)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "학생만 수강 신청이 가능합니다"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "학생만 수강 신청이 가능합니다"})
 		return
 	}
 
 	var req dto.EnrollCourseRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Println("[error] enroll course :", err.Error()) // If this occurs, check the client-side request
-		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 수강 신청 요청"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "잘못된 수강 신청 요청"})
 		return
 	}
 
-	err := h.courseRegService.Enroll(studentID, req.CourseID)
-	if err != nil {
+	if err := h.courseRegService.Enroll(studentID, req.CourseID); err != nil {
 		status, msg := enrollErrToResponse(err)
-		c.JSON(status, gin.H{"error": msg})
+		c.JSON(status, gin.H{"message": msg})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "수강신청 성공"})
+	// course_status may be null if registration is closed between Enroll and GetAllCourseStatus
+	courseStatus, _ := h.courseRegService.GetAllCourseStatus()
+	c.JSON(http.StatusOK, dto.EnrollCourseResponse{
+		Message:      "수강신청 성공",
+		CourseStatus: courseStatus,
+	})
 }
 
 func enrollErrToResponse(err error) (int, string) {
@@ -72,7 +76,7 @@ func enrollErrToResponse(err error) (int, string) {
 func (h *CourseRegHandler) GetAllCourseStatus(c *gin.Context) {
 	result, err := h.courseRegService.GetAllCourseStatus()
 	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		c.JSON(http.StatusForbidden, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -85,7 +89,7 @@ func (h *CourseRegHandler) GetAllCourseStatus(c *gin.Context) {
 // 	courseID, err := strconv.Atoi(c.Param("course_id"))
 // 	if err != nil {
 // 		log.Println("cancel enrollment failed:", err.Error())
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 강의 ID"})
+// 		c.JSON(http.StatusBadRequest, gin.H{"message": "잘못된 강의 ID"})
 // 		return
 // 	}
 

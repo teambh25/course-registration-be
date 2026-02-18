@@ -26,23 +26,23 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	var u user
 
 	if err := c.ShouldBindJSON(&u); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
 	role, userID, err := h.authService.Check(u.Username, u.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "서버 에러"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "서버 에러"})
 		return
 	}
 	if role == 0 { // Todo : zero value 체크는 안티패턴
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "잘못된 ID/PW"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "잘못된 ID/PW"})
 		return
 	}
 
 	err = session.SetSession(c, role, userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"role": role.String()})
@@ -51,7 +51,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 func (h *AuthHandler) Logout(c *gin.Context) {
 	err := session.DeleteSession(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.Status(http.StatusOK)
@@ -61,7 +61,7 @@ func (h *AuthHandler) Check(c *gin.Context) {
 	role, _, err := session.GetSession(c)
 	if err != nil {
 		log.Println("auth check failed:", err.Error())
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "세션 만료"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "세션 만료"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"role": role.String()})
