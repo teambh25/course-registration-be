@@ -165,10 +165,13 @@ class Student(HttpUser):
                 return False  # 성공, 다음 강의로
             elif response.status_code == 409:
                 response.success()
-                return True  # 중복, 계속 클릭
+                return False  # 이미 신청/시간 충돌/정원 초과, 다음 강의로
             elif response.status_code in (404, 403):
                 response.success()
-                return False  # 실패, 다음 강의로
+                return False  # 강의 없음/신청 기간 아님, 다음 강의로
+            elif response.status_code == 503:
+                response.failure(f"HTTP {response.status_code}")
+                return True  # worker timeout/cache sync 실패, 재시도
             else:
                 response.failure(f"HTTP {response.status_code}")
-                return True  # 서버 에러, 재시도
+                return True  # 내부 오류, 재시도
