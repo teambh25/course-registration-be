@@ -1,8 +1,6 @@
 package routers
 
 import (
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
 
 	"course-reg/internal/app/domain/export"
@@ -12,7 +10,7 @@ import (
 
 // InitRouter initialize routing information
 func InitRouter(
-	runMode, sessionKey string,
+	runMode string,
 	h *handler.Handlers,
 ) *gin.Engine {
 	gin.SetMode(runMode) // set gin mode (must be called before gin.New())
@@ -22,10 +20,6 @@ func InitRouter(
 	}
 	r.Use(gin.Recovery())    // panic 발생시 500
 	r.Use(middleware.CORS()) // CORS
-
-	// session
-	store := memstore.NewStore([]byte(sessionKey)) // authentication key for session
-	r.Use(sessions.Sessions("course_reg_session", store))
 
 	v1 := r.Group("/api/v1")
 	{

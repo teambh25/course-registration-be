@@ -83,7 +83,7 @@ func NewApplication(cfg *setting.Config) (*Application, error) {
 	log.Println("[info] handlers setup completed")
 
 	// 8. Router (depends on: handlers)
-	router := routers.InitRouter(cfg.Server.RunMode, cfg.Secret.SessionKey, handlers)
+	router := routers.InitRouter(cfg.Server.RunMode, handlers)
 	log.Println("[info] router setup completed")
 
 	// 9. Restore registration if it was enabled before restart (depends on: adminService)

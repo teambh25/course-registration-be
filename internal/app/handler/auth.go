@@ -40,7 +40,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	err = session.SetSession(c, role, userID)
+	err = session.CreateSession(c, role, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return

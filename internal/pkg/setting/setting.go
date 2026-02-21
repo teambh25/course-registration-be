@@ -31,9 +31,8 @@ type Server struct {
 }
 
 type Secret struct {
-	SessionKey string
-	AdminID    string
-	AdminPW    string
+	AdminID string
+	AdminPW string
 }
 
 type Database struct {
@@ -67,9 +66,8 @@ func Load() *Config {
 			ConnMaxIdleTime: time.Duration(getEnvAsIntRequired("DATABASE_CONN_MAX_IDLE_TIME")) * time.Minute,
 		},
 		Secret: Secret{
-			SessionKey: getEnvRequired("SECRET_SESSION_KEY"),
-			AdminID:    getEnvRequired("SECRET_ADMIN_ID"),
-			AdminPW:    getEnvRequired("SECRET_ADMIN_PW"),
+			AdminID: getEnvRequired("SECRET_ADMIN_ID"),
+			AdminPW: getEnvRequired("SECRET_ADMIN_PW"),
 		},
 	}
 }

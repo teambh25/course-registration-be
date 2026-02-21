@@ -1,47 +1,96 @@
 package session
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"net/http"
+	"sync"
+	"time"
 
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
-func GetSession(c *gin.Context) (UserRole, uint, error) {
-	session := sessions.Default(c)
-	roleInt, ok := session.Get("role").(int)
-	if !ok {
-		return 0, 0, fmt.Errorf("get role failed")
-	}
+const (
+	cookieName = "course_reg_session"
+	maxAge     = 60 * 60 // 1시간
+)
 
-	userID, ok := session.Get("userID").(uint)
-	if !ok {
-		return 0, 0, fmt.Errorf("get user id failed")
-	}
-
-	return UserRole(roleInt), userID, nil
+type sessionData struct {
+	Role      UserRole
+	UserID    uint
+	ExpiresAt time.Time
 }
 
-func SetSession(c *gin.Context, role UserRole, userID uint) error {
-	session := sessions.Default(c)
-	session.Set("role", int(role))
-	session.Set("userID", userID)
-	session.Options(sessions.Options{
-		MaxAge:   60 * 60,
-		Path:     "/",
-		Domain:   "",
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode, // cf. 백엔드 서버와 프론트 서버의 도메인이 다르면 Domain과 SameStie 설정 필요
-		// Secure:   isProd, // 운영 환경(HTTPS)일 때만 true
+var sessionStore sync.Map // map[string]sessionData
+
+func newSessionID() (string, error) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+func GetSession(c *gin.Context) (UserRole, uint, error) {
+	id, err := c.Cookie(cookieName)
+	if err != nil {
+		return 0, 0, fmt.Errorf("no session cookie")
+	}
+
+	v, ok := sessionStore.Load(id)
+	if !ok {
+		return 0, 0, fmt.Errorf("session not found")
+	}
+
+	data := v.(sessionData)
+	if time.Now().After(data.ExpiresAt) {
+		sessionStore.Delete(id)
+		return 0, 0, fmt.Errorf("session expired")
+	}
+
+	return data.Role, data.UserID, nil
+}
+
+func CreateSession(c *gin.Context, role UserRole, userID uint) error {
+	id, err := newSessionID()
+	if err != nil {
+		return err
+	}
+
+	sessionStore.Store(id, sessionData{
+		Role:      role,
+		UserID:    userID,
+		ExpiresAt: time.Now().Add(maxAge * time.Second),
 	})
-	err := session.Save()
-	return err
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     cookieName,
+		Value:    id,
+		MaxAge:   maxAge,
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+	return nil
 }
 
 func DeleteSession(c *gin.Context) error {
-	session := sessions.Default(c)
-	session.Clear()
-	err := session.Save()
-	return err
+	id, err := c.Cookie(cookieName)
+	if err != nil {
+		return nil // 이미 없으면 성공으로 처리?????????
+	}
+
+	sessionStore.Delete(id)
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     cookieName,
+		Value:    "",
+		MaxAge:   -1,
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+	return nil
 }
