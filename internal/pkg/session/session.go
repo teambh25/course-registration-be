@@ -68,10 +68,11 @@ func CreateSession(c *gin.Context, role UserRole, userID uint) error {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     cookieName,
 		Value:    id,
-		MaxAge:   maxAge,
+		MaxAge:   0,
 		Path:     "/",
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: cookieSameSite(),
+		Secure:   cookieSecure(),
 	})
 	return nil
 }
@@ -90,7 +91,19 @@ func DeleteSession(c *gin.Context) error {
 		MaxAge:   -1,
 		Path:     "/",
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: cookieSameSite(),
+		Secure:   cookieSecure(),
 	})
 	return nil
+}
+
+func cookieSameSite() http.SameSite {
+	if gin.Mode() == gin.ReleaseMode {
+		return http.SameSiteNoneMode
+	}
+	return http.SameSiteLaxMode
+}
+
+func cookieSecure() bool {
+	return gin.Mode() == gin.ReleaseMode
 }
