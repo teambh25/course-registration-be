@@ -45,7 +45,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"role": role.String()})
+	c.JSON(http.StatusOK, gin.H{"message": role.String()})
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
@@ -64,5 +64,5 @@ func (h *AuthHandler) Check(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "세션 만료"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"role": role.String()})
+	c.JSON(http.StatusOK, gin.H{"message": role.String()})
 }

@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	cookieName = "course_reg_session"
-	maxAge     = 60 * 60 // 1시간
+	cookieName      = "course_reg_session"
+	maxAge          = 60 * 60 // 1 hour
+	cleanupInterval = 30 * time.Minute
 )
 
 type sessionData struct {
@@ -45,6 +46,8 @@ func GetSession(c *gin.Context) (UserRole, uint, error) {
 	}
 
 	data := v.(sessionData)
+
+	// lazy deletion
 	if time.Now().After(data.ExpiresAt) {
 		sessionStore.Delete(id)
 		return 0, 0, fmt.Errorf("session expired")
@@ -95,6 +98,22 @@ func DeleteSession(c *gin.Context) error {
 		Secure:   cookieSecure(),
 	})
 	return nil
+}
+
+func StartCleanup() {
+	go func() {
+		ticker := time.NewTicker(cleanupInterval)
+		defer ticker.Stop()
+		for range ticker.C {
+			now := time.Now()
+			sessionStore.Range(func(key, value any) bool {
+				if now.After(value.(sessionData).ExpiresAt) {
+					sessionStore.Delete(key)
+				}
+				return true
+			})
+		}
+	}()
 }
 
 func cookieSameSite() http.SameSite {

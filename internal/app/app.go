@@ -17,6 +17,7 @@ import (
 	"course-reg/internal/app/routers"
 	"course-reg/internal/app/service"
 	"course-reg/internal/pkg/database"
+	"course-reg/internal/pkg/session"
 	"course-reg/internal/pkg/setting"
 )
 
@@ -82,7 +83,11 @@ func NewApplication(cfg *setting.Config) (*Application, error) {
 	}
 	log.Println("[info] handlers setup completed")
 
-	// 8. Router (depends on: handlers)
+	// 8. Session cleanup goroutine
+	session.StartCleanup()
+	log.Println("[info] session cleanup goroutine started")
+
+	// 9. Router (depends on: handlers)
 	router := routers.InitRouter(cfg.Server.RunMode, handlers)
 	log.Println("[info] router setup completed")
 
