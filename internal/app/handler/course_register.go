@@ -40,7 +40,10 @@ func (h *CourseRegHandler) EnrollCourse(c *gin.Context) {
 	}
 
 	// course_status may be null if registration is closed between Enroll and GetAllCourseStatus
-	courseStatus, _ := h.courseRegService.GetAllCourseStatus()
+	courseStatus, err := h.courseRegService.GetAllCourseStatus()
+	if err != nil {
+		courseStatus = nil
+	}
 	c.JSON(http.StatusOK, dto.EnrollCourseResponse{
 		Message:      "수강신청 성공",
 		CourseStatus: courseStatus,
