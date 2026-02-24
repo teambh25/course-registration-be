@@ -4,6 +4,8 @@ import (
 	"course-reg/internal/app/repository"
 	"course-reg/internal/pkg/session"
 	"log"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
@@ -28,7 +30,7 @@ func (a *AuthService) Check(username string, password string) (session.UserRole,
 		userID, pw, err = a.studentRepo.FetchPassword(username)
 		if err != nil {
 			log.Println("[error] fetch password failed", err.Error())
-		} else if pw == password {
+		} else if bcrypt.CompareHashAndPassword([]byte(pw), []byte(password)) == nil {
 			role = session.RoleStudent
 		}
 	}

@@ -20,9 +20,9 @@ func createTestCourses() []models.Course {
 
 func createTestStudents() []models.Student {
 	return []models.Student{
-		{ID: 1, Name: "학생1", PhoneNumber: "010-1111-1111", BirthDate: "1997-01-05"},
-		{ID: 2, Name: "학생2", PhoneNumber: "010-2222-2222", BirthDate: "2000-06-15"},
-		{ID: 3, Name: "학생3", PhoneNumber: "010-3333-3333", BirthDate: "2001-12-23"},
+		{ID: 1, Name: "학생1", UserID: "user1", Password: "pw1"},
+		{ID: 2, Name: "학생2", UserID: "user2", Password: "pw2"},
+		{ID: 3, Name: "학생3", UserID: "user3", Password: "pw3"},
 	}
 }
 

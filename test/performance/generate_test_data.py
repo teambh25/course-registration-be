@@ -17,7 +17,7 @@ def generate_student_data(fake: Faker, num_student: int):
         )
 
         students.append(
-            {"name": name, "phone_number": phone_numbers[i], "birth_date": birth_date}
+            {"name": name, "user_id": phone_numbers[i], "password": birth_date}
         )
 
     # Write to a JSON file

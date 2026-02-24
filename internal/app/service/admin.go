@@ -8,6 +8,8 @@ import (
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AdminService struct {
@@ -138,6 +140,15 @@ func (s *AdminService) SetRegistrationPeriod(startTime, endTime string) error {
 }
 
 func (s *AdminService) RegisterStudents(students []models.Student) error {
+	for i := range students {
+		hash, err := bcrypt.GenerateFromPassword([]byte(students[i].Password), 6)
+		if err != nil {
+			log.Println("password hashing failed:", err.Error())
+			return err
+		}
+		students[i].Password = string(hash)
+	}
+
 	err := s.regState.RunIfEnabled(false, func() error {
 		return s.studentRepo.BatchInsertStudents(students)
 	})

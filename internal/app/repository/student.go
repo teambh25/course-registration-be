@@ -20,11 +20,11 @@ func NewStudentRepository(db *gorm.DB) *StudentRepository {
 func (r *StudentRepository) FetchPassword(username string) (uint, string, error) {
 	var student *models.Student
 
-	result := r.db.Where("phone_number = ?", username).Take(&student)
+	result := r.db.Where("user_id = ?", username).Take(&student)
 	if result.Error != nil {
 		return 0, "", fmt.Errorf("fetch failed: %w", result.Error)
 	}
-	return student.ID, student.BirthDate, nil
+	return student.ID, student.Password, nil
 }
 
 func (r *StudentRepository) BatchInsertStudents(students []models.Student) error {
