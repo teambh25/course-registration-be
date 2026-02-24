@@ -33,6 +33,7 @@ type Server struct {
 type Secret struct {
 	AdminID string
 	AdminPW string
+	Pepper  string
 }
 
 type Database struct {
@@ -68,6 +69,7 @@ func Load() *Config {
 		Secret: Secret{
 			AdminID: getEnvRequired("SECRET_ADMIN_ID"),
 			AdminPW: getEnvRequired("SECRET_ADMIN_PW"),
+			Pepper:  getEnvRequired("SECRET_PEPPER"),
 		},
 	}
 }

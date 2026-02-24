@@ -8,8 +8,7 @@ import (
 	"course-reg/internal/app/domain/worker"
 	"course-reg/internal/app/models"
 	"course-reg/internal/app/repository"
-
-	"golang.org/x/crypto/bcrypt"
+	"course-reg/internal/pkg/crypto"
 )
 
 type AdminService struct {
@@ -20,6 +19,7 @@ type AdminService struct {
 	enrollWorker  *worker.EnrollmentWorker
 	regState      *registration.State
 	warmup        func()
+	pepper        string
 }
 
 func NewAdminService(
@@ -30,6 +30,7 @@ func NewAdminService(
 	w *worker.EnrollmentWorker,
 	rs *registration.State,
 	warmup func(),
+	pepper string,
 ) *AdminService {
 	return &AdminService{
 		studentRepo:   s,
@@ -39,6 +40,7 @@ func NewAdminService(
 		enrollWorker:  w,
 		regState:      rs,
 		warmup:        warmup,
+		pepper:        pepper,
 	}
 }
 
@@ -141,12 +143,12 @@ func (s *AdminService) SetRegistrationPeriod(startTime, endTime string) error {
 
 func (s *AdminService) RegisterStudents(students []models.Student) error {
 	for i := range students {
-		hash, err := bcrypt.GenerateFromPassword([]byte(students[i].Password), 6)
+		hash, err := crypto.HashPassword(students[i].Password, s.pepper)
 		if err != nil {
 			log.Println("password hashing failed:", err.Error())
 			return err
 		}
-		students[i].Password = string(hash)
+		students[i].Password = hash
 	}
 
 	err := s.regState.RunIfEnabled(false, func() error {

@@ -70,8 +70,8 @@ func NewApplication(cfg *setting.Config) (*Application, error) {
 	warmup := func() {
 		database.WarmupConnectionPool(db, cfg.Database.PoolSize)
 	}
-	authService := service.NewAuthService(studentRepo, cfg.Secret.AdminID, cfg.Secret.AdminPW)
-	adminService := service.NewAdminService(studentRepo, courseRepo, enrollRepo, regConfigRepo, enrollWorker, regState, warmup)
+	authService := service.NewAuthService(studentRepo, cfg.Secret.AdminID, cfg.Secret.AdminPW, cfg.Secret.Pepper)
+	adminService := service.NewAdminService(studentRepo, courseRepo, enrollRepo, regConfigRepo, enrollWorker, regState, warmup, cfg.Secret.Pepper)
 	courseRegService := service.NewCourseRegService(courseRepo, enrollRepo, enrollWorker, regState)
 	log.Println("[info] services setup completed")
 
